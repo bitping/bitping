@@ -21,3 +21,8 @@ $(PLATFORMS):
 	GOOS=$(os) GOARCH=amd64 go build ${LDFLAGS} -o $(BIN_DIR)/$(BINARY)-$(VERSION)-$(os)-amd64
 
 
+geth:
+	geth --datadir /root/.ethereum \
+		--ipcpath /root/.ethereum/geth.ipc \
+		--syncmode "fast" --cache 512
+
