@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"sync"
 	"time"
 
 	"github.com/auser/bitping/types"
@@ -52,9 +53,9 @@ func (app *EthereumApp) Run() {
 			fmt.Printf("Got an error: %v\n", err)
 			log.Fatal(err)
 		case head := <-headsCh:
-			block, err := app.makeBlockFromHeader(head)
+			_, err := app.makeBlockFromHeader(head)
 			if err == nil {
-				fmt.Printf("Got a block: %#v\n", block)
+				//fmt.Printf("Got a block: %#v\n", block)
 			}
 			transactions, err := app.makeTransactionsFromHeader(head)
 			if err == nil {
@@ -111,14 +112,6 @@ func (app *EthereumApp) makeBlockFromHeader(
 	totalDifficulty := types.BigNumber(head.Difficulty.String())
 	cancel()
 
-	for _, uncle := range block.Uncles() {
-		fmt.Printf("uncle: %#v\n", uncle)
-	}
-
-	for _, tx := range block.Transactions() {
-		fmt.Printf("tx: %#v\n", tx)
-	}
-
 	blockObj := &types.Block{
 		BlockHash:             block.Hash().Hex(),
 		BlockNumber:           block.Number().Int64(),
@@ -146,12 +139,54 @@ func (app *EthereumApp) makeTransactionsFromHeader(
 
 	miner := head.Hash()
 	count, err := app.Client.TransactionCount(ctx, miner)
+	block, err := app.Client.BlockByHash(ctx, miner)
 
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf("count: %d\n", count)
+	// Is this the right approach?
+	var transactions []types.Transaction
+	var wg sync.WaitGroup
 
-	return nil, nil
+	queue := make(chan *types.Transaction, 1)
+	wg.Add(int(count))
+
+	for i := 0; i < int(count); i++ {
+		go func(i int) {
+			tx, err := app.Client.TransactionInBlock(ctx, miner, uint(i))
+			if err == nil {
+				sender, err := app.Client.TransactionSender(ctx, tx, miner, uint(i))
+				if err == nil {
+					fmt.Printf("%#v\n", tx)
+					transaction := &types.Transaction{
+						BlockHash:        miner.String(),
+						BlockNumber:      block.Number().Int64(),
+						Hash:             tx.Hash().String(),
+						Nonce:            int64(tx.Nonce()),
+						TransactionIndex: int64(i),
+						From:             sender.String(),
+						To:               tx.To().String(),
+						Value:            types.BigNumber(fmt.Sprint(tx.Value())),
+						GasPrice:         types.BigNumber(fmt.Sprint(tx.Cost())),
+						Gas:              types.BigNumber(fmt.Sprint(tx.Gas())),
+					}
+					queue <- transaction
+				}
+			}
+		}(i)
+	}
+
+	go func() {
+		for t := range queue {
+			transactions = append(transactions, *t)
+			wg.Done()
+		}
+	}()
+
+	wg.Wait()
+
+	cancel()
+
+	return transactions, nil
 }
