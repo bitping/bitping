@@ -38,8 +38,8 @@ func NewClient(opts EthereumOptions) (*EthereumApp, error) {
 }
 
 func (app *EthereumApp) Run(
-	blockChan chan *types.Block,
-	transChan chan *[]types.Transaction,
+	blockChan chan types.Block,
+	transChan chan []types.Transaction,
 	errChan chan error,
 ) {
 	fmt.Printf("Running ethereum\n")
@@ -66,7 +66,7 @@ func (app *EthereumApp) Run(
 			transactions, err := app.makeTransactionsFromHeader(head)
 			if err != nil {
 				errChan <- err
-			} else {
+			} else if len(transactions) > 1 {
 				transChan <- transactions
 			}
 		}
@@ -106,21 +106,21 @@ func (app *EthereumApp) SubscribeToNewBlocks(
 
 func (app *EthereumApp) makeBlockFromHeader(
 	head *types.Header,
-) (*types.Block, error) {
+) (types.Block, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	miner := head.Hash()
 	block, err := app.Client.BlockByHash(ctx, miner)
 
 	if err != nil {
-		return nil, err
+		return types.Block{}, err
 	}
 
 	difficulty := types.BigNumber(block.Difficulty().String())
 	totalDifficulty := types.BigNumber(head.Difficulty.String())
 	cancel()
 
-	blockObj := &types.Block{
+	blockObj := types.Block{
 		BlockHash:             block.Hash().Hex(),
 		BlockNumber:           block.Number().Int64(),
 		BlockDifficulty:       difficulty,
@@ -142,7 +142,7 @@ func (app *EthereumApp) makeBlockFromHeader(
 
 func (app *EthereumApp) makeTransactionsFromHeader(
 	head *types.Header,
-) (*[]types.Transaction, error) {
+) ([]types.Transaction, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
 	miner := head.Hash()
@@ -154,10 +154,10 @@ func (app *EthereumApp) makeTransactionsFromHeader(
 	}
 
 	// Is this the right approach?
-	var transactions *[]types.Transaction
+	var transactions []types.Transaction
 	var wg sync.WaitGroup
 
-	queue := make(chan *types.Transaction, 1)
+	queue := make(chan types.Transaction, 1)
 	wg.Add(int(count))
 
 	for i := 0; i < int(count); i++ {
@@ -167,7 +167,7 @@ func (app *EthereumApp) makeTransactionsFromHeader(
 				sender, err := app.Client.TransactionSender(ctx, tx, miner, uint(i))
 				if err == nil {
 					fmt.Printf("%#v\n", tx)
-					transaction := &types.Transaction{
+					transaction := types.Transaction{
 						BlockHash:        miner.String(),
 						BlockNumber:      block.Number().Int64(),
 						Hash:             tx.Hash().String(),
@@ -187,7 +187,7 @@ func (app *EthereumApp) makeTransactionsFromHeader(
 
 	go func() {
 		for t := range queue {
-			*transactions = append(*transactions, *t)
+			transactions = append(transactions, t)
 			wg.Done()
 		}
 	}()
