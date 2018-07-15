@@ -166,8 +166,7 @@ func (app *EthereumApp) makeTransactionsFromHeader(
 			if err == nil {
 				sender, err := app.Client.TransactionSender(ctx, tx, miner, uint(i))
 				if err == nil {
-					fmt.Printf("%#v\n", tx)
-					transaction := &types.Transaction{
+					transaction := types.Transaction{
 						BlockHash:        miner.String(),
 						BlockNumber:      block.Number().Int64(),
 						Hash:             tx.Hash().String(),

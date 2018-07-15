@@ -26,7 +26,11 @@ var EthCmd = cli.Command{
 			Name:   "run",
 			Usage:  "Run geth",
 			Action: StartListening,
-			Flags:  append([]cli.Flag{}, sharedFlags...),
+			Flags: append([]cli.Flag{
+				cli.BoolFlag{
+					Name:  "stdout",
+					Usage: "print to stdout",
+				}}, sharedFlags...),
 		},
 		{
 			Name:   "info",
@@ -56,7 +60,7 @@ func StartListening(c *cli.Context) {
 		case block := <-blockCh:
 			fmt.Printf("Got a block: %#v\n", block)
 		case txs := <-transactionCh:
-			fmt.Printf("Got some transactions: %#v\n", txs)
+			fmt.Printf("\nGot some transactions: %#v\n", txs)
 		}
 	}
 }
