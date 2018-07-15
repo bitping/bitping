@@ -47,8 +47,8 @@ var EthCmd = cli.Command{
 func StartListening(c *cli.Context) {
 	client := makeClient(c)
 
-	var blockCh = make(chan *types.Block, 16)
-	var transactionCh = make(chan *[]types.Transaction, 16)
+	var blockCh = make(chan types.Block, 16)
+	var transactionCh = make(chan []types.Transaction, 16)
 	var errCh = make(chan error, 16)
 
 	go client.Run(blockCh, transactionCh, errCh)
