@@ -22,11 +22,11 @@ type EthereumApp struct {
 	Options EthereumOptions
 }
 
-func NewClient(opts EthereumOptions) *EthereumApp {
+func NewClient(opts EthereumOptions) (*EthereumApp, error) {
 	ipcPath := opts.IpcPath
 	client, err := ethclient.Dial(ipcPath)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	app := &EthereumApp{
@@ -34,10 +34,14 @@ func NewClient(opts EthereumOptions) *EthereumApp {
 		Options: opts,
 	}
 
-	return app
+	return app, nil
 }
 
-func (app *EthereumApp) Run() {
+func (app *EthereumApp) Run(
+	blockChan chan *types.Block,
+	transChan chan *[]types.Transaction,
+	errChan chan error,
+) {
 	fmt.Printf("Running ethereum\n")
 	networkId := app.GetNetwork()
 	fmt.Printf("Network id: %v\n", networkId)
@@ -45,7 +49,7 @@ func (app *EthereumApp) Run() {
 	// test
 	var headsCh = make(chan *types.Header, 16)
 	var errCh = make(chan error, 16)
-	go app.SubscribeToAddressEvents(headsCh, errCh)
+	go app.SubscribeToNewBlocks(headsCh, errCh)
 
 	for {
 		select {
@@ -53,13 +57,17 @@ func (app *EthereumApp) Run() {
 			fmt.Printf("Got an error: %v\n", err)
 			log.Fatal(err)
 		case head := <-headsCh:
-			_, err := app.makeBlockFromHeader(head)
-			if err == nil {
-				//fmt.Printf("Got a block: %#v\n", block)
+			block, err := app.makeBlockFromHeader(head)
+			if err != nil {
+				errChan <- err
+			} else {
+				blockChan <- block
 			}
 			transactions, err := app.makeTransactionsFromHeader(head)
-			if err == nil {
-				fmt.Printf("Txs: %#v\n", transactions)
+			if err != nil {
+				errChan <- err
+			} else {
+				transChan <- transactions
 			}
 		}
 	}
@@ -74,7 +82,7 @@ func (app *EthereumApp) GetNetwork() *big.Int {
 	return networkId
 }
 
-func (app *EthereumApp) SubscribeToAddressEvents(
+func (app *EthereumApp) SubscribeToNewBlocks(
 	heads chan *types.Header,
 	errCh chan error,
 ) {
@@ -134,8 +142,8 @@ func (app *EthereumApp) makeBlockFromHeader(
 
 func (app *EthereumApp) makeTransactionsFromHeader(
 	head *types.Header,
-) ([]types.Transaction, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+) (*[]types.Transaction, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
 	miner := head.Hash()
 	count, err := app.Client.TransactionCount(ctx, miner)
@@ -146,7 +154,7 @@ func (app *EthereumApp) makeTransactionsFromHeader(
 	}
 
 	// Is this the right approach?
-	var transactions []types.Transaction
+	var transactions *[]types.Transaction
 	var wg sync.WaitGroup
 
 	queue := make(chan *types.Transaction, 1)
@@ -179,7 +187,7 @@ func (app *EthereumApp) makeTransactionsFromHeader(
 
 	go func() {
 		for t := range queue {
-			transactions = append(transactions, *t)
+			*transactions = append(*transactions, *t)
 			wg.Done()
 		}
 	}()
@@ -190,3 +198,7 @@ func (app *EthereumApp) makeTransactionsFromHeader(
 
 	return transactions, nil
 }
+
+/**
+* TODO: Add watcher for contract addresses
+**/
