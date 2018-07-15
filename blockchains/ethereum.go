@@ -66,7 +66,7 @@ func (app *EthereumApp) Run(
 			transactions, err := app.makeTransactionsFromHeader(head)
 			if err != nil {
 				errChan <- err
-			} else if len(transactions) > 1 {
+			} else {
 				transChan <- transactions
 			}
 		}
