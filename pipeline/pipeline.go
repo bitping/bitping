@@ -28,8 +28,8 @@ func (p *Stage) Run(ctx context.Context, in <-chan iface.Block) (<-chan iface.Bl
 	errc := make(chan error, 1)
 
 	go func() {
-		// defer close(out)
-		// defer close(errc)
+		defer close(out)
+		defer close(errc)
 
 		for block := range in {
 			var err error
