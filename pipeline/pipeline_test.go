@@ -55,15 +55,24 @@ var _ = Describe("Stage", func() {
 			return block, nil
 		}
 
-		log.Printf("waiting...")
 		stage.addStep(add1)
 		stage.addStep(add2)
 
-		_, _, err := stage.Run(ctx, in)
-		in <- new(block)
+		out, _, err := stage.Run(ctx, in)
+
+		go func() {
+			in <- new(block)
+			in <- new(block)
+		}()
+
+		// wait for blocks to return
+		<-out
+		<-out
+
 		ctx.Done()
 
 		Expect(err).NotTo(HaveOccurred())
-		Expect(num).To(Equal(3))
+		Expect(num).To(Equal(6))
+		log.Print("test done")
 	})
 })

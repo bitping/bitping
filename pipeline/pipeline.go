@@ -31,25 +31,26 @@ func (p *Stage) Run(ctx context.Context, in <-chan iface.Block) (<-chan iface.Bl
 		defer close(out)
 		defer close(errc)
 
-		for block := range in {
-			var err error
-			// For each step in stage, modify block / do work
-			for _, step := range p.steps {
-				// Use block returned by step
-				block, err = step(block)
-				if err != nil {
-					errc <- err
-					return
-				}
-			}
+		for {
 			select {
-			case out <- block:
+			case block := <-in:
+				var err error
+
+				// For each step in stage, modify block / do work
+				for _, step := range p.steps {
+					// Use block returned by step
+					block, err = step(block)
+					if err != nil {
+						errc <- err
+						return
+					}
+				}
+
+				// Return processed block
+				out <- block
 			case <-ctx.Done():
 				return
 			}
-
-			// Feed final block output to next stage and/or wait for context to
-			// close
 		}
 	}()
 
