@@ -12,6 +12,10 @@ os = $(word 1, $@)
 
 LDFLAGS = -ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.branch=${BRANCH}"
 
+
+deps:
+	go get -u ./...
+
 build:
 	go build ${LDFLAGS} -o $(CURR_DIR)/build/bin/$(BINARY)
 
