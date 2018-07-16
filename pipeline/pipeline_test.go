@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/auser/bitping/iface"
@@ -20,20 +21,11 @@ func errStep(block iface.Block) (iface.Block, error) {
 	return nil, errors.New("blew up")
 }
 
-func add1(block iface.Block) (iface.Block, error) {
-	num = num + 1
-	return block, nil
-}
-
-func add2(block iface.Block) (iface.Block, error) {
-	num = num + 2
-	return block, nil
-}
-
 var _ = Describe("Stage", func() {
 	var (
 		stage *Stage
-		ctx   context.Background
+		ctx   context.Context
+		in    chan iface.Block
 	)
 
 	BeforeEach(func() {
@@ -45,11 +37,21 @@ var _ = Describe("Stage", func() {
 	It("should run all steps in a stage", func() {
 		num := 0
 
+		add1 := func(block iface.Block) (iface.Block, error) {
+			num = num + 1
+			return block, nil
+		}
+
+		add2 := func(block iface.Block) (iface.Block, error) {
+			num = num + 2
+			return block, nil
+		}
+
 		stage.addStep(add1)
 		stage.addStep(add2)
-		out, errc, err := stage.Run(ctx, in)
+		_, _, err := stage.Run(ctx, in)
 
-		Expect(err).NotToHaveOccured()
+		Expect(err).NotTo(HaveOccurred())
 		Expect(num).To(Equal(3))
 	})
 })

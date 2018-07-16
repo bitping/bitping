@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"context"
-	"errors"
 
 	"github.com/auser/bitping/iface"
 )
