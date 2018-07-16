@@ -18,8 +18,8 @@ func Run(args []string) {
 	app.Run(args)
 }
 
-// TODO: move to other file
-func RunServer(c *cli.Context) {
-	app := NewApp(AppOptions{})
-	app.Run()
-}
+// // TODO: move to other file
+// func RunServer(c *cli.Context) {
+// 	app := NewApp(AppOptions{})
+// 	app.Run()
+// }
