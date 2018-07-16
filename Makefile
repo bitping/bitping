@@ -30,3 +30,5 @@ geth:
 		--ipcpath /root/.ethereum/geth.ipc \
 		--syncmode "fast" --cache 512
 
+test:
+	go test ./... -v -ginkgo.v -ginkgo.progress

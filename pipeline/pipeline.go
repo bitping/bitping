@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"log"
 
 	"github.com/auser/bitping/iface"
 )
@@ -32,17 +33,24 @@ func (p *Stage) Run(ctx context.Context, in <-chan iface.Block) (<-chan iface.Bl
 		defer close(errc)
 
 		for block := range in {
+			var err error
+			// For each step in stage, modify block / do work
 			for _, step := range p.steps {
-				block, err := step(block)
+				// Use block returned by step
+				block, err = step(block)
 				if err != nil {
 					errc <- err
 					return
 				}
-				select {
-				case out <- block:
-				case <-ctx.Done():
-					return
-				}
+				log.Printf("%v", block)
+			}
+
+			// Feed final block output to next stage and/or wait for context to
+			// close
+			select {
+			case out <- block:
+			case <-ctx.Done():
+				return
 			}
 		}
 	}()
