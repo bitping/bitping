@@ -3,8 +3,8 @@ package pipeline
 import (
 	// "context"
 	"context"
+	"errors"
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/auser/bitping/iface"
@@ -31,7 +31,6 @@ var _ = Describe("Stage", func() {
 	)
 
 	BeforeEach(func() {
-		log.Printf("beforeeach")
 		ctx = context.Background()
 		in = make(chan iface.Block)
 		stage = new(Stage)
@@ -60,10 +59,8 @@ var _ = Describe("Stage", func() {
 
 		out, _, err := stage.Run(ctx, in)
 
-		go func() {
-			in <- new(block)
-			in <- new(block)
-		}()
+		in <- new(block)
+		in <- new(block)
 
 		// wait for blocks to return
 		<-out
@@ -73,6 +70,32 @@ var _ = Describe("Stage", func() {
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(num).To(Equal(6))
-		log.Print("test done")
+	})
+
+	It("should clean up channels on failure", func() {
+
+		defer close(in)
+		num := 0
+
+		add1 := func(block iface.Block) (iface.Block, error) {
+			num = num + 1
+			return block, nil
+		}
+
+		err1 := func(block iface.Block) (iface.Block, error) {
+			return nil, errors.New("oops")
+		}
+
+		stage.addStep(add1)
+		stage.addStep(err1)
+
+		_, errc, err := stage.Run(ctx, in)
+		Expect(err).NotTo(HaveOccurred())
+
+		in <- new(block)
+
+		// wait for blocks to return
+		err = <-errc
+		Expect(err).To(HaveOccurred())
 	})
 })

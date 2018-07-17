@@ -34,20 +34,7 @@ func (p *Stage) Run(ctx context.Context, in <-chan iface.Block) (<-chan iface.Bl
 		for {
 			select {
 			case block := <-in:
-				var err error
-
-				// For each step in stage, modify block / do work
-				for _, step := range p.steps {
-					// Use block returned by step
-					block, err = step(block)
-					if err != nil {
-						errc <- err
-						return
-					}
-				}
-
-				// Return processed block
-				out <- block
+				go p.RunSteps(ctx, block, out, errc)
 			case <-ctx.Done():
 				return
 			}
@@ -55,4 +42,22 @@ func (p *Stage) Run(ctx context.Context, in <-chan iface.Block) (<-chan iface.Bl
 	}()
 
 	return out, errc, nil
+}
+
+func (p *Stage) RunSteps(ctx context.Context, block iface.Block, out chan iface.Block, errc chan error) {
+	var err error
+
+	// For each step in stage, modify block / do work
+	for _, step := range p.steps {
+		// Use block returned by step
+		block, err = step(block)
+		if err != nil {
+			errc <- err
+			ctx.Done()
+			return
+		}
+	}
+
+	// Return processed block
+	out <- block
 }
