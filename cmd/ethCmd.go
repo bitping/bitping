@@ -14,11 +14,10 @@ import (
 
 var sharedFlags = append([]cli.Flag{}, cli.StringFlag{
 	Name:   "ipcPath",
-	Value:  "/root/.ethereum/geth.ipc",
+	Value:  ".ethereum/geth.ipc",
 	Usage:  "ipcPath for geth",
 	EnvVar: "IPC_PATH",
-},
-)
+})
 
 var EthCmd = cli.Command{
 	Name:  "eth",
