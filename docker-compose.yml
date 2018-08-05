@@ -1,0 +1,20 @@
+version: "3"
+
+# docker run -it -p 8545:8545 -p 30303:30303 ethereum/client-go --rpc --rpcaddr "0.0.0.0"
+
+services:
+  dev:
+    image: ethereum/client-go
+    # build:
+    #   context: "./docker"
+    container_name: dev
+    command: --rpc --rpcaddr "0.0.0.0" --syncmode "fast" --ws --wsorigins "*" --wsaddr "0.0.0.0"
+    volumes:
+      - ${PWD}:/go
+      - ${PWD}/ethereum:/root/.ethereum
+      - ${HOME}/.ssh:/root/.ssh
+    ports:
+      - "8545:8545"
+      - "8546:8546"
+      - "30303:30303"
+

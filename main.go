@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/auser/bitping/cmd"
+	cmd "github.com/auser/bitping/cmd"
 	"github.com/codegangsta/cli"
 )
 

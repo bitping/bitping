@@ -8,23 +8,25 @@ import (
 	"sync"
 	"time"
 
+	"cloud.google.com/go/pubsub"
 	"github.com/auser/bitping/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 type EthereumOptions struct {
-	IpcPath string
+	Node string
 }
 
 // TODO: make interface for blockchains
 type EthereumApp struct {
-	Client  *ethclient.Client
-	Options EthereumOptions
+	Client       *ethclient.Client
+	PubsubClient *pubsub.Client
+	Options      EthereumOptions
 }
 
 func NewClient(opts EthereumOptions) (*EthereumApp, error) {
-	ipcPath := opts.IpcPath
-	client, err := ethclient.Dial(ipcPath)
+	nodePath := opts.Node
+	client, err := ethclient.Dial(nodePath)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +41,7 @@ func NewClient(opts EthereumOptions) (*EthereumApp, error) {
 
 func (app *EthereumApp) Run(
 	blockChan chan types.Block,
-	transChan chan []types.Transaction,
+	// transChan chan []types.Transaction,
 	errChan chan error,
 ) {
 	fmt.Printf("Running ethereum\n")
@@ -47,8 +49,8 @@ func (app *EthereumApp) Run(
 	fmt.Printf("Network id: %v\n", networkId)
 
 	// test
-	var headsCh = make(chan *types.Header, 16)
-	var errCh = make(chan error, 16)
+	var headsCh = make(chan *types.Header)
+	var errCh = make(chan error)
 	go app.SubscribeToNewBlocks(headsCh, errCh)
 
 	for {
@@ -63,12 +65,12 @@ func (app *EthereumApp) Run(
 			} else {
 				blockChan <- block
 			}
-			transactions, err := app.makeTransactionsFromHeader(head)
-			if err != nil {
-				errChan <- err
-			} else {
-				transChan <- transactions
-			}
+			// transactions, err := app.makeTransactionsFromHeader(head)
+			// if err != nil {
+			// 	errChan <- err
+			// } else {
+			// 	transChan <- transactions
+			// }
 		}
 	}
 }
@@ -107,7 +109,8 @@ func (app *EthereumApp) SubscribeToNewBlocks(
 func (app *EthereumApp) makeBlockFromHeader(
 	head *types.Header,
 ) (types.Block, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx := context.Background()
 
 	miner := head.Hash()
 	block, err := app.Client.BlockByHash(ctx, miner)
@@ -118,9 +121,10 @@ func (app *EthereumApp) makeBlockFromHeader(
 
 	difficulty := types.BigNumber(block.Difficulty().String())
 	totalDifficulty := types.BigNumber(head.Difficulty.String())
-	cancel()
+	// cancel()
 
 	blockObj := types.Block{
+		Network:               "ethereum",
 		BlockHash:             block.Hash().Hex(),
 		BlockNumber:           block.Number().Int64(),
 		BlockDifficulty:       difficulty,
@@ -148,6 +152,7 @@ func (app *EthereumApp) makeTransactionsFromHeader(
 	miner := head.Hash()
 	count, err := app.Client.TransactionCount(ctx, miner)
 	block, err := app.Client.BlockByHash(ctx, miner)
+	cancel()
 
 	if err != nil {
 		return nil, err

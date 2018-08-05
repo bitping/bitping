@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"log"
 
+	"cloud.google.com/go/pubsub"
+	"golang.org/x/net/context"
+
 	b "github.com/auser/bitping/blockchains"
 	"github.com/auser/bitping/types"
 	"github.com/codegangsta/cli"
@@ -13,11 +16,27 @@ import (
 )
 
 var sharedFlags = append([]cli.Flag{}, cli.StringFlag{
-	Name:   "ipcPath",
-	Value:  ".ethereum/geth.ipc",
-	Usage:  "ipcPath for geth",
-	EnvVar: "IPC_PATH",
-})
+	Name:   "node",
+	Value:  "http://localhost:8545",
+	Usage:  "node path for geth",
+	EnvVar: "NODE_PATH",
+},
+	cli.StringFlag{
+		Name:   "googleProjectId",
+		Usage:  "google project id",
+		EnvVar: "GOOGLE_PROJECT_ID",
+	}, cli.StringFlag{
+		Name:   "googleKeyfile",
+		Usage:  "google auth client",
+		EnvVar: "GOOGLE_AUTH_FILE",
+	})
+
+var (
+	PubsubClient *pubsub.Client
+	Database     *bolt.DB
+)
+
+const PubsubTopicID = "ethereum-block-update"
 
 var EthCmd = cli.Command{
 	Name:  "eth",
@@ -32,6 +51,9 @@ var EthCmd = cli.Command{
 				cli.BoolFlag{
 					Name:  "stdout",
 					Usage: "print to stdout",
+				}, cli.BoolFlag{
+					Name:  "background",
+					Usage: "run in the background",
 				}}, sharedFlags...),
 		},
 		{
@@ -46,69 +68,176 @@ var EthCmd = cli.Command{
 // TODO: Break this out and make configurable
 // with config file
 
-func blockHandler(db *bolt.DB, in <-chan types.Block, errCh chan error) {
-	logger := func(block types.Block) {
-		fmt.Printf("Got a block in the block handler: %#v\n", block)
+func blockHandler(in <-chan types.Block, errCh chan error) {
+	// logger := func(block types.Block) {
+	// 	fmt.Printf("Got a block in the block handler: %#v\n", block)
+	// }
+
+	// for block := range in {
+	// logger(block)
+	// writeToDb(block, errCh)
+	// }
+}
+
+func writeToDb(block types.Block, errCh chan error) {
+	ctx := context.Background()
+
+	// err := Database.Update(func(tx *bolt.Tx) error {
+	// 	b, err := tx.CreateBucketIfNotExists([]byte("blocks"))
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	id := make([]byte, 8)
+	binary.BigEndian.PutUint64(id, uint64(block.BlockNumber))
+
+	buf, err := json.Marshal(block)
+	if err != nil {
+		errCh <- err
 	}
+	// 	if err := b.Put(id, buf); err != nil {
+	// 		return err
+	// 	}
 
-	writeToDb := func(block types.Block) {
-		err := db.Update(func(tx *bolt.Tx) error {
-			b, err := tx.CreateBucketIfNotExists([]byte("blocks"))
-			if err != nil {
-				return err
-			}
+	// 	if PubsubClient == nil {
+	// 		return nil
+	// 	}
 
-			id := make([]byte, 8)
-			binary.BigEndian.PutUint64(id, uint64(block.BlockNumber))
+	// 	return nil
+	// })
+	topic := PubsubClient.Topic(PubsubTopicID)
+	_, err = topic.Publish(ctx, &pubsub.Message{Data: []byte(buf)}).Get(ctx)
 
-			buf, err := json.Marshal(block)
-			if err != nil {
-				return err
-
-			}
-			if err := b.Put(id, buf); err != nil {
-				return err
-			}
-
-			return nil
-		})
-		if err != nil {
-			errCh <- err
-		}
-	}
-
-	for block := range in {
-		logger(block)
-		writeToDb(block)
+	if err != nil {
+		fmt.Printf("Error publishing: %s\n", err)
+		errCh <- err
 	}
 }
 
+// ----------------------------------------------------------------------
+// TODO: Abstract this part
+// ----------------------------------------------------------------------
+
+type processor interface {
+	Process()
+}
+
+type processorNet map[string]processor
+
+type listener struct {
+	In  <-chan types.Block
+	Out chan<- types.Block
+}
+
+func (l *listener) Process() {
+	fmt.Println("Listener starting...")
+
+	go func() {
+		for {
+			s, ok := <-l.In
+			if !ok {
+				fmt.Println("Listener finished")
+				close(l.Out)
+				return
+			}
+			l.Out <- s
+		}
+	}()
+}
+
+type printer struct {
+	In   <-chan types.Block
+	Done chan<- struct{}
+}
+
+func (p *printer) Process() {
+	go func() {
+		for {
+			c, ok := <-p.In
+			if !ok {
+				fmt.Println("Printer finished")
+				close(p.Done)
+				return
+			}
+			fmt.Printf("Block number: %#v\n", c.BlockNumber)
+		}
+	}()
+}
+
+// ----------------------------------------------------------------------
+// TODO: end abstraction
+// ----------------------------------------------------------------------
 func StartListening(c *cli.Context) {
+	var in = make(chan types.Block, 10)
+	var bToP = make(chan types.Block, 10)
+	// var transactionCh = make(chan []types.Transaction, 16)
+	var errCh = make(chan error, 16)
+
+	done := make(chan struct{})
+
+	net := processorNet{
+		"receiver": &listener{
+			In:  in,
+			Out: bToP,
+		},
+		"printer": &printer{
+			In:   bToP,
+			Done: done,
+		},
+	}
+	fmt.Printf("Starting nodes...\n")
+	for node := range net {
+		net[node].Process()
+	}
+	// SETUP LISTENING PROCESS
+	client := makeClient(c)
+	go client.Run(in, errCh)
+	// go blockHandler(in, errCh)
+	for {
+		select {
+
+		case err := <-errCh:
+			fmt.Printf("Error listening: %#v\n", err)
+			close(in)
+			<-done
+			//case block := <-blockCh:
+			//fmt.Printf("Got a block: %#v\n", block)
+			// case txs := <-transactionCh:
+			// fmt.Printf("\nGot some transactions: %#v\n", txs)
+		}
+	}
+	// END SETUP
+
+	// close(in)
+	// <-done
+	fmt.Printf("Shutdown network\n")
+	// if c.Bool("background") == true {
+	// go startListeningForeground(c)
+	// } else {
+	// startListeningForeground(c)
+	// }
+}
+
+func startListeningForeground(c *cli.Context) {
 	client := makeClient(c)
 
 	var blockCh = make(chan types.Block, 16)
-	var transactionCh = make(chan []types.Transaction, 16)
+	// var transactionCh = make(chan []types.Transaction, 16)
 	var errCh = make(chan error, 16)
 
 	// open db
-	db, err := bolt.Open("database/eth.db", 0600, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	go client.Run(blockCh, transactionCh, errCh)
-	go blockHandler(db, blockCh, errCh)
+	go client.Run(blockCh, errCh)
+	go blockHandler(blockCh, errCh)
 
 	for {
 		select {
 
 		case err := <-errCh:
 			fmt.Printf("Error listening: %#v\n", err)
-		//case block := <-blockCh:
-		//fmt.Printf("Got a block: %#v\n", block)
-		case txs := <-transactionCh:
-			fmt.Printf("\nGot some transactions: %#v\n", txs)
+			//case block := <-blockCh:
+			//fmt.Printf("Got a block: %#v\n", block)
+			// case txs := <-transactionCh:
+			// fmt.Printf("\nGot some transactions: %#v\n", txs)
 		}
 	}
 }
@@ -121,12 +250,54 @@ func GetInfo(c *cli.Context) {
 
 func makeClient(c *cli.Context) *b.EthereumApp {
 	opts := b.EthereumOptions{
-		IpcPath: c.String("ipcPath"),
+		Node: c.String("node"),
 	}
 	client, err := b.NewClient(opts)
 
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 	}
+
+	pubsubClient, err := configurePubsub(c)
+	if err != nil {
+		log.Fatalf("error: %v\n", err)
+	}
+
+	PubsubClient = pubsubClient
+
+	configureDB(c)
 	return client
+
+}
+
+func configureDB(c *cli.Context) {
+	db, err := bolt.Open("database/eth.db", 0600, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	Database = db
+}
+
+func configurePubsub(c *cli.Context) (*pubsub.Client, error) {
+	googleProjectId := c.String("googleProjectId")
+
+	ctx := context.Background()
+
+	// clientOption := option.WithServiceAccountFile(c.String("googleKeyfile"))
+	client, err := pubsub.NewClient(ctx, googleProjectId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the topic if it doesn't exist.
+	if exists, err := client.Topic(PubsubTopicID).Exists(ctx); err != nil {
+		return nil, err
+	} else if !exists {
+		if _, err := client.CreateTopic(ctx, PubsubTopicID); err != nil {
+			return nil, err
+		}
+	}
+	return client, nil
 }

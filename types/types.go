@@ -9,6 +9,7 @@ type Header = types.Header
 type BigNumber string
 
 type Block struct {
+	Network               string    `json:"network"`
 	BlockNumber           int64     `json:"blockNumber"`
 	BlockHash             string    `json:"blockHash"`
 	BlockParentHash       string    `json:"blockParentHash"`
