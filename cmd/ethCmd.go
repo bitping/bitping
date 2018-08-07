@@ -10,6 +10,7 @@ import (
 	"golang.org/x/net/context"
 
 	b "github.com/auser/bitping/blockchains"
+	"github.com/auser/bitping/processors"
 	"github.com/auser/bitping/types"
 	"github.com/codegangsta/cli"
 	bolt "github.com/coreos/bbolt"
@@ -69,14 +70,14 @@ var EthCmd = cli.Command{
 // with config file
 
 func blockHandler(in <-chan types.Block, errCh chan error) {
-	// logger := func(block types.Block) {
-	// 	fmt.Printf("Got a block in the block handler: %#v\n", block)
-	// }
+	logger := func(block types.Block) {
+		fmt.Printf("Got a block in the block handler: %#v\n", block)
+	}
 
-	// for block := range in {
-	// logger(block)
-	// writeToDb(block, errCh)
-	// }
+	for block := range in {
+		logger(block)
+		// 		writeToDb(block, errCh)
+	}
 }
 
 func writeToDb(block types.Block, errCh chan error) {
@@ -118,52 +119,6 @@ func writeToDb(block types.Block, errCh chan error) {
 // TODO: Abstract this part
 // ----------------------------------------------------------------------
 
-type processor interface {
-	Process()
-}
-
-type processorNet map[string]processor
-
-type listener struct {
-	In  <-chan types.Block
-	Out chan<- types.Block
-}
-
-func (l *listener) Process() {
-	fmt.Println("Listener starting...")
-
-	go func() {
-		for {
-			s, ok := <-l.In
-			if !ok {
-				fmt.Println("Listener finished")
-				close(l.Out)
-				return
-			}
-			l.Out <- s
-		}
-	}()
-}
-
-type printer struct {
-	In   <-chan types.Block
-	Done chan<- struct{}
-}
-
-func (p *printer) Process() {
-	go func() {
-		for {
-			c, ok := <-p.In
-			if !ok {
-				fmt.Println("Printer finished")
-				close(p.Done)
-				return
-			}
-			fmt.Printf("Block number: %#v\n", c.BlockNumber)
-		}
-	}()
-}
-
 // ----------------------------------------------------------------------
 // TODO: end abstraction
 // ----------------------------------------------------------------------
@@ -175,24 +130,26 @@ func StartListening(c *cli.Context) {
 
 	done := make(chan struct{})
 
-	net := processorNet{
-		"receiver": &listener{
+	net := processors.ProcessorNet{
+		"receiver": &processors.Listener{
 			In:  in,
 			Out: bToP,
 		},
-		"printer": &printer{
+		"printer": &processors.Printer{
 			In:   bToP,
 			Done: done,
 		},
 	}
 	fmt.Printf("Starting nodes...\n")
 	for node := range net {
+		net[node].Init() // TODO: make this a processor
+	}
+	for node := range net {
 		net[node].Process()
 	}
 	// SETUP LISTENING PROCESS
 	client := makeClient(c)
 	go client.Run(in, errCh)
-	// go blockHandler(in, errCh)
 	for {
 		select {
 
@@ -200,16 +157,10 @@ func StartListening(c *cli.Context) {
 			fmt.Printf("Error listening: %#v\n", err)
 			close(in)
 			<-done
-			//case block := <-blockCh:
-			//fmt.Printf("Got a block: %#v\n", block)
-			// case txs := <-transactionCh:
-			// fmt.Printf("\nGot some transactions: %#v\n", txs)
 		}
 	}
 	// END SETUP
 
-	// close(in)
-	// <-done
 	fmt.Printf("Shutdown network\n")
 	// if c.Bool("background") == true {
 	// go startListeningForeground(c)
