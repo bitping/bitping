@@ -187,7 +187,7 @@ Loop:
 	// and give to workers until queue is empty
 	if wait {
 		for p.waitingQueue.Len() != 0 {
-			workerTaskChan <- p.readyWorkers
+			workerTaskChan = <-p.readyWorkers
 			// a worker is ready
 			workerTaskChan <- p.waitingQueue.PopFront().(func())
 		}
@@ -243,7 +243,7 @@ func (p *WorkerPool) stop(wait bool) {
 	p.stopMutex.Lock()
 	defer p.stopMutex.Unlock()
 	if p.stopped {
-		break
+		return
 	}
 	p.stopped = true
 	if wait {

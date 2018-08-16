@@ -10,7 +10,6 @@ import (
 	"golang.org/x/net/context"
 
 	b "github.com/auser/bitping/blockchains"
-	"github.com/auser/bitping/processors"
 	"github.com/auser/bitping/types"
 	"github.com/auser/bitping/work"
 	"github.com/codegangsta/cli"
@@ -127,6 +126,7 @@ func StartListening(c *cli.Context) {
 	var workerPool = work.New(10)
 	var in = make(chan types.Block, 10)
 	var errCh = make(chan error, 16)
+	var done = make(chan struct{})
 
 	// SETUP LISTENING PROCESS
 	client := makeClient(c)
