@@ -30,8 +30,5 @@ geth:
 		--ipcpath .ethereum/geth.ipc \
 		--syncmode "fast" --cache 512
 
-run:
-	build/bin/bitping eth run
-
 test:
 	go test ./... -v -ginkgo.v -ginkgo.progress

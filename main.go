@@ -14,6 +14,12 @@ func main() {
 func Run(args []string) {
 	app := cli.NewApp()
 	app.Name = "bitping"
+	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "daemonize",
+			Usage: "run as a daemon",
+		},
+	}
 	app.Commands = []cli.Command{cmd.EthCmd}
 	app.Run(args)
 }

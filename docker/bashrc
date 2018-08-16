@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd /go
+export PS1="\W $ "
+echo "EOS Dev environment ready!"
+
+## Insert here your startup commands
+# ..
+

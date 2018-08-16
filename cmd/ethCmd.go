@@ -12,6 +12,7 @@ import (
 	b "github.com/auser/bitping/blockchains"
 	"github.com/auser/bitping/processors"
 	"github.com/auser/bitping/types"
+	"github.com/auser/bitping/work"
 	"github.com/codegangsta/cli"
 	bolt "github.com/coreos/bbolt"
 )
@@ -123,35 +124,21 @@ func writeToDb(block types.Block, errCh chan error) {
 // TODO: end abstraction
 // ----------------------------------------------------------------------
 func StartListening(c *cli.Context) {
+	var workerPool = work.New(10)
 	var in = make(chan types.Block, 10)
-	var bToP = make(chan types.Block, 10)
-	// var transactionCh = make(chan []types.Transaction, 16)
 	var errCh = make(chan error, 16)
 
-	done := make(chan struct{})
-
-	net := processors.ProcessorNet{
-		"receiver": &processors.Listener{
-			In:  in,
-			Out: bToP,
-		},
-		"printer": &processors.Printer{
-			In:   bToP,
-			Done: done,
-		},
-	}
-	fmt.Printf("Starting nodes...\n")
-	for node := range net {
-		net[node].Init() // TODO: make this a processor
-	}
-	for node := range net {
-		net[node].Process()
-	}
 	// SETUP LISTENING PROCESS
 	client := makeClient(c)
 	go client.Run(in, errCh)
 	for {
 		select {
+		case o := <-in:
+			fmt.Printf("Got a block\n")
+			workerPool.Submit(func() {
+				fmt.Printf("Handling block... %#v\n", o)
+				// TODO: push to google pub/sub
+			})
 
 		case err := <-errCh:
 			fmt.Printf("Error listening: %#v\n", err)
@@ -162,6 +149,7 @@ func StartListening(c *cli.Context) {
 	// END SETUP
 
 	fmt.Printf("Shutdown network\n")
+	workerPool.Stop()
 	// if c.Bool("background") == true {
 	// go startListeningForeground(c)
 	// } else {
