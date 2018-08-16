@@ -5,14 +5,10 @@ package work
 // https://github.com/gammazero/workerpool/blob/master/workerpool.go
 
 import (
-	"fmt"
-	"log"
-	"math/rand"
-	"os"
+	"sync"
 	"time"
 
-	"github.com/auser/bitping/types"
-	"github.com/gammazzero/deque"
+	"github.com/gammazero/deque"
 )
 
 const (
