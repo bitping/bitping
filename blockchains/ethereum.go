@@ -272,12 +272,10 @@ func (app *EthereumApp) GetTransactionsFromBlock(
 		}(i)
 	}
 
-	go func() {
-		for t := range queue {
-			transactions = append(transactions, t)
-		}
-	}()
 	wg.Wait()
+	for t := range queue {
+		transactions = append(transactions, t)
+	}
 
 	return transactions, nil
 }
