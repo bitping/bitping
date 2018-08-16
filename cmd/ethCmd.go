@@ -92,6 +92,7 @@ func writeToDb(block types.Block, errCh chan error) {
 	id := make([]byte, 8)
 	binary.BigEndian.PutUint64(id, uint64(block.BlockNumber))
 
+	// here
 	buf, err := json.Marshal(block)
 	if err != nil {
 		errCh <- err
@@ -123,10 +124,10 @@ func writeToDb(block types.Block, errCh chan error) {
 // TODO: end abstraction
 // ----------------------------------------------------------------------
 func StartListening(c *cli.Context) {
-	var workerPool = work.New(10)
-	var in = make(chan types.Block, 10)
-	var errCh = make(chan error, 16)
-	var done = make(chan struct{})
+	var workerPool = work.New(128)
+	var in = make(chan types.Block)
+	var errCh = make(chan error)
+	// var done = make(chan struct{})
 
 	// SETUP LISTENING PROCESS
 	client := makeClient(c)
@@ -134,16 +135,22 @@ func StartListening(c *cli.Context) {
 	for {
 		select {
 		case o := <-in:
-			fmt.Printf("Got a block\n")
 			workerPool.Submit(func() {
-				fmt.Printf("Handling block... %#v\n", o)
+
+				// TODO: Use alice to make this a workflow
+				txs, err := client.GetTransactionsFromBlock(o)
+				if err != nil {
+					log.Printf("Error: %s\n", err.Error())
+					return
+				}
+				fmt.Printf("txs: %#v\n", len(txs))
 				// TODO: push to google pub/sub
 			})
 
 		case err := <-errCh:
 			fmt.Printf("Error listening: %#v\n", err)
-			close(in)
-			<-done
+			// close(in)
+			// <-done
 		}
 	}
 	// END SETUP
@@ -197,12 +204,12 @@ func makeClient(c *cli.Context) *b.EthereumApp {
 		log.Fatalf("error: %v\n", err)
 	}
 
-	pubsubClient, err := configurePubsub(c)
-	if err != nil {
-		log.Fatalf("error: %v\n", err)
-	}
+	// pubsubClient, err := configurePubsub(c)
+	// if err != nil {
+	// 	log.Fatalf("error: %v\n", err)
+	// }
 
-	PubsubClient = pubsubClient
+	// PubsubClient = pubsubClient
 
 	configureDB(c)
 	return client

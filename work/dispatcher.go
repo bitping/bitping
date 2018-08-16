@@ -48,6 +48,8 @@ type WorkerPool struct {
 	waitingQueue deque.Deque
 	stopMutex    sync.Mutex
 	stopped      bool
+
+	// Hooks, 'cause maybe?
 }
 
 // Stop stops the worker pool and waits for only currently running tasks

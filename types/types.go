@@ -5,10 +5,12 @@ import (
 )
 
 type Header = types.Header
+type BlockchainBlock = types.Block
 
 type BigNumber string
 
 type Block struct {
+	HeaderHash            string    `json:"headerHash"`
 	Network               string    `json:"network"`
 	BlockNumber           int64     `json:"blockNumber"`
 	BlockHash             string    `json:"blockHash"`
