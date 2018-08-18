@@ -30,9 +30,10 @@ type EthereumApp struct {
 	Client       *ethclient.Client
 	PubsubClient *pubsub.Client
 	Options      EthereumOptions
+	types.BlockChainRunner
 }
 
-func NewClient(opts EthereumOptions) (*EthereumApp, error) {
+func NewEthClient(opts EthereumOptions) (*EthereumApp, error) {
 	nodePath := opts.Node
 	client, err := ethclient.Dial(nodePath)
 	if err != nil {

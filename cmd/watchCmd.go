@@ -72,7 +72,7 @@ func runEthereum(addr string, in chan types.Block, errCh chan error) {
 	opts := b.EthereumOptions{
 		Node: addr,
 	}
-	ethClient, err := b.NewClient(opts)
+	ethClient, err := b.NewEthClient(opts)
 	if err != nil {
 		log.Fatal("Error: %s\n", err.Error())
 	}

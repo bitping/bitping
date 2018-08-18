@@ -10,6 +10,11 @@ type HomesteadSigner = types.HomesteadSigner
 
 type BigNumber string
 
+type BlockChainRunner interface {
+	NewClient()
+	Run()
+}
+
 type Block struct {
 	HeaderHash            string        `json:"headerHash"`
 	Network               string        `json:"network"`
