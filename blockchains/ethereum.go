@@ -146,7 +146,7 @@ func (app *EthereumApp) getBlockByNumWithBackoff(num *big.Int) (*types.Blockchai
 	return block, nil
 }
 
-func (app *EthereumApp) getTransactionCountWithBackoff(miner string) (uint, error) {
+func (app *EthereumApp) getTransactionCountWithBackoff(hsh common.Hash) (uint, error) {
 	var (
 		count uint
 		err   error
@@ -155,7 +155,7 @@ func (app *EthereumApp) getTransactionCountWithBackoff(miner string) (uint, erro
 	var b = &backoff.Backoff{
 		Max: 5 * time.Minute,
 	}
-	hsh := common.HexToHash(miner)
+	// hsh := common.HexToHash(miner)
 	ctx := context.Background()
 
 	b.Reset()
@@ -188,18 +188,18 @@ func (app *EthereumApp) GetBlockFromHeader(
 	}
 
 	miner := head.Hash()
-	difficulty := types.BigNumber(block.Difficulty().String())
-	totalDifficulty := types.BigNumber(head.Difficulty.String())
+	// difficulty := types.BigNumber(block.Difficulty().String())
+	// totalDifficulty := types.BigNumber(head.Difficulty.String())
 	// cancel()
 
 	blockObj := types.Block{
 		Network:               "ethereum",
-		HeaderHash:            miner.Hex(),
-		BlockHash:             block.Hash().Hex(),
+		HeaderHash:            head.Hash(),
+		BlockHash:             block.HashNoNonce().Hex(),
 		BlockNumber:           block.Number().Int64(),
-		BlockDifficulty:       difficulty,
-		BlockTotalDifficulty:  totalDifficulty,
-		BlockNonce:            fmt.Sprint(block.Nonce),
+		BlockDifficulty:       block.Difficulty().Int64(),
+		BlockTotalDifficulty:  block.Difficulty().Int64(), // make sense?
+		BlockNonce:            fmt.Sprint(block.Nonce()),
 		BlockSize:             float64(block.Size()),
 		BlockGasUsed:          block.GasUsed(),
 		BlockGasLimit:         block.GasLimit(),
@@ -214,20 +214,64 @@ func (app *EthereumApp) GetBlockFromHeader(
 	return blockObj, nil
 }
 
+func (app *EthereumApp) getTransactionAtIndexWithHash(
+	i int,
+	block types.Block,
+	hsh common.Hash,
+	queue chan types.Transaction,
+	wg *sync.WaitGroup,
+) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer wg.Done()
+	defer cancel()
+
+	tx, err := app.Client.TransactionInBlock(ctx, hsh, uint(i))
+	if err != nil {
+		fmt.Printf("Error ocurred getting transaction at index: %#v %s %d\n", err, hsh.Hex(), uint(i))
+		cancel()
+		return
+	}
+
+	sender, err := app.Client.TransactionSender(ctx, tx, hsh, uint(i))
+	if err != nil {
+		fmt.Printf("Error ocurred getting transaction sender: %#v\n", err)
+		cancel()
+		return
+	}
+
+	var toAddr string
+	toAddrTx := tx.To()
+	if toAddrTx != nil {
+		toAddr = toAddrTx.String()
+	} else {
+		toAddr = ""
+	}
+	transaction := types.Transaction{
+		BlockHash:        block.BlockHash,
+		BlockNumber:      block.BlockNumber,
+		Hash:             tx.Hash().String(),
+		Nonce:            int64(tx.Nonce()),
+		TransactionIndex: int64(i),
+		From:             sender.String(),
+		To:               toAddr,
+		Value:            types.BigNumber(fmt.Sprint(tx.Value())),
+		GasPrice:         types.BigNumber(fmt.Sprint(tx.Cost())),
+		Gas:              types.BigNumber(fmt.Sprint(tx.Gas())),
+	}
+	queue <- transaction
+}
+
 func (app *EthereumApp) GetTransactionsFromBlock(
 	// head *types.Header,
 	block types.Block,
 ) ([]types.Transaction, error) {
-	// ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	ctx := context.Background()
-
-	miner := block.BlockHash
-	hsh := common.HexToHash(miner)
-	count, err := app.getTransactionCountWithBackoff(miner)
+	hsh := block.HeaderHash
+	// hsh := common.HexToHash(miner)
+	count, err := app.getTransactionCountWithBackoff(block.HeaderHash)
 	if err != nil {
 		fmt.Printf("error in transaction count: %s\n", err.Error())
 	}
-	fmt.Printf("%d count: %d\n", block.BlockNumber, int(count))
+	fmt.Printf("ETH: %d count: %d\n", block.HeaderHash, int(count))
 	// block, err := app.Client.BlockByHash(ctx, hsh)
 
 	if err != nil {
@@ -241,38 +285,11 @@ func (app *EthereumApp) GetTransactionsFromBlock(
 	wg.Add(int(count))
 
 	for i := 0; i < int(count); i++ {
-		go func(i int) {
-			defer wg.Done()
-			tx, err := app.Client.TransactionInBlock(ctx, hsh, uint(i))
-			if err == nil {
-				sender, err := app.Client.TransactionSender(ctx, tx, hsh, uint(i))
-				if err == nil {
-					var toAddr string
-					toAddrTx := tx.To()
-					if toAddrTx != nil {
-						toAddr = toAddrTx.String()
-					} else {
-						toAddr = ""
-					}
-					transaction := types.Transaction{
-						BlockHash:        miner,
-						BlockNumber:      block.BlockNumber,
-						Hash:             tx.Hash().String(),
-						Nonce:            int64(tx.Nonce()),
-						TransactionIndex: int64(i),
-						From:             sender.String(),
-						To:               toAddr,
-						Value:            types.BigNumber(fmt.Sprint(tx.Value())),
-						GasPrice:         types.BigNumber(fmt.Sprint(tx.Cost())),
-						Gas:              types.BigNumber(fmt.Sprint(tx.Gas())),
-					}
-					queue <- transaction
-				}
-			}
-		}(i)
+		go app.getTransactionAtIndexWithHash(i, block, hsh, queue, &wg)
 	}
 
 	wg.Wait()
+	fmt.Printf("DONE WAITING!")
 	for t := range queue {
 		transactions = append(transactions, t)
 	}
