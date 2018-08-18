@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-	"sync"
 	"time"
 
 	"cloud.google.com/go/pubsub"
@@ -239,90 +238,3 @@ func (app *EthereumApp) GetBlockFromHeader(
 
 	return blockObj, nil
 }
-
-func (app *EthereumApp) getTransactionAtIndexWithHash(
-	i int,
-	block types.Block,
-	hsh common.Hash,
-	queue chan types.Transaction,
-	wg *sync.WaitGroup,
-) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer wg.Done()
-	defer cancel()
-
-	tx, err := app.Client.TransactionInBlock(ctx, hsh, uint(i))
-	if err != nil {
-		fmt.Printf("Error ocurred getting transaction at index: %#v %s %d\n", err, hsh.Hex(), uint(i))
-		cancel()
-		return
-	}
-
-	sender, err := app.Client.TransactionSender(ctx, tx, hsh, uint(i))
-	if err != nil {
-		fmt.Printf("Error ocurred getting transaction sender: %#v\n", err)
-		cancel()
-		return
-	}
-
-	var toAddr string
-	toAddrTx := tx.To()
-	if toAddrTx != nil {
-		toAddr = toAddrTx.String()
-	} else {
-		toAddr = ""
-	}
-	transaction := types.Transaction{
-		BlockHash:        block.BlockHash,
-		BlockNumber:      block.BlockNumber,
-		Hash:             tx.Hash().String(),
-		Nonce:            int64(tx.Nonce()),
-		TransactionIndex: int64(i),
-		From:             sender.String(),
-		To:               toAddr,
-		Value:            types.BigNumber(fmt.Sprint(tx.Value())),
-		GasPrice:         types.BigNumber(fmt.Sprint(tx.Cost())),
-		Gas:              types.BigNumber(fmt.Sprint(tx.Gas())),
-	}
-	queue <- transaction
-}
-
-func (app *EthereumApp) GetTransactionsFromBlock(
-	// head *types.Header,
-	block types.Block,
-) ([]types.Transaction, error) {
-	hsh := common.HexToHash(block.HeaderHash)
-	// hsh := common.HexToHash(miner)
-	count, err := app.getTransactionCountWithBackoff(hsh)
-	if err != nil {
-		fmt.Printf("error in transaction count: %s\n", err.Error())
-	}
-	fmt.Printf("ETH: %d count: %d\n", block.HeaderHash, int(count))
-	// block, err := app.Client.BlockByHash(ctx, hsh)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Is this the right approach?
-	var transactions []types.Transaction
-	queue := make(chan types.Transaction)
-	var wg sync.WaitGroup
-	wg.Add(int(count))
-
-	for i := 0; i < int(count); i++ {
-		go app.getTransactionAtIndexWithHash(i, block, hsh, queue, &wg)
-	}
-
-	wg.Wait()
-	fmt.Printf("DONE WAITING!")
-	for t := range queue {
-		transactions = append(transactions, t)
-	}
-
-	return transactions, nil
-}
-
-/**
-* TODO: Add watcher for contract addresses
-**/
