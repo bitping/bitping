@@ -137,7 +137,12 @@ func StartListening(c *cli.Context) {
 		case block := <-in:
 			workerPool.Submit(func() {
 
-				txs := block.Transactions
+				b, err := json.Marshal(block)
+				if err != nil {
+					fmt.Printf("Error: %s\n", err.Error())
+				} else {
+					fmt.Printf("%s\n", b)
+				}
 
 				// 	// TODO: Use alice to make this a workflow
 				// 	txs, err := client.GetTransactionsFromBlock(o)
@@ -145,7 +150,7 @@ func StartListening(c *cli.Context) {
 				// 		log.Printf("Error: %s\n", err.Error())
 				// 		return
 				// 	}
-				fmt.Printf("%d) txs: %#v\n", block.BlockNumber, len(txs))
+				// fmt.Printf("%d) txs: %#v\n", block.BlockNumber, len(txs))
 				// 	// TODO: push to google pub/sub
 			})
 
