@@ -1,35 +1,36 @@
 package types
 
 import (
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type Header = types.Header
 type BlockchainBlock = types.Block
+type HomesteadSigner = types.HomesteadSigner
 
 type BigNumber string
 
 type Block struct {
-	HeaderHash            common.Hash `json:"headerHash"`
-	Network               string      `json:"network"`
-	BlockNumber           int64       `json:"blockNumber"`
-	BlockHash             string      `json:"blockHash"`
-	BlockParentHash       string      `json:"blockParentHash"`
-	BlockNonce            string      `json:"blockNonce"`
-	BlockSha3Uncles       string      `json:"blockSha3Uncles"`
-	BlockLogsBloom        string      `json:"blockLogsBloom"`
-	BlockTransactionsRoot string      `json:"blockTransactionsRoot"`
-	BlockStateRoot        string      `json:"blockStateRoot"`
-	BlockMiner            string      `json:"blockMiner"`
-	BlockDifficulty       int64       `json:"blockDifficulty"`
-	BlockTotalDifficulty  int64       `json:"blockTotalDifficulty"`
-	BlockExtraData        string      `json:"blockExtraData"`
-	BlockSize             float64     `json:"blockSize"`
-	BlockGasLimit         uint64      `json:"blockGasLimit"`
-	BlockGasUsed          uint64      `json:"blockGasUsed"`
-	BlockTimeStamp        int64       `json:"blockTimestamp"`
-	BlockUncles           []string    `json:"blockUncles"`
+	HeaderHash            string        `json:"headerHash"`
+	Network               string        `json:"network"`
+	BlockNumber           int64         `json:"blockNumber"`
+	BlockHash             string        `json:"blockHash"`
+	BlockParentHash       string        `json:"blockParentHash"`
+	BlockNonce            string        `json:"blockNonce"`
+	BlockSha3Uncles       string        `json:"blockSha3Uncles"`
+	BlockLogsBloom        string        `json:"blockLogsBloom"`
+	BlockTransactionsRoot string        `json:"blockTransactionsRoot"`
+	BlockStateRoot        string        `json:"blockStateRoot"`
+	BlockMiner            string        `json:"blockMiner"`
+	BlockDifficulty       int64         `json:"blockDifficulty"`
+	BlockTotalDifficulty  int64         `json:"blockTotalDifficulty"`
+	BlockExtraData        string        `json:"blockExtraData"`
+	BlockSize             float64       `json:"blockSize"`
+	BlockGasLimit         uint64        `json:"blockGasLimit"`
+	BlockGasUsed          uint64        `json:"blockGasUsed"`
+	BlockTimeStamp        int64         `json:"blockTimestamp"`
+	BlockUncles           []string      `json:"blockUncles"`
+	Transactions          []Transaction `json:"transactions"`
 }
 
 type Transaction struct {

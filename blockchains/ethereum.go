@@ -187,14 +187,39 @@ func (app *EthereumApp) GetBlockFromHeader(
 		return types.Block{}, err
 	}
 
-	miner := head.Hash()
 	// difficulty := types.BigNumber(block.Difficulty().String())
 	// totalDifficulty := types.BigNumber(head.Difficulty.String())
 	// cancel()
 
+	var transactions []types.Transaction
+	for i, tx := range block.Transactions() {
+		var txFromStr string = "unknown"
+		var txToStr string = "unknown"
+		if msg, err := tx.AsMessage(types.HomesteadSigner{}); err != nil {
+			txFromStr = msg.From().Hex()
+			if msg.To() != nil {
+				txToStr = msg.To().Hex()
+			}
+		}
+
+		transaction := types.Transaction{
+			BlockHash:        block.Hash().Hex(),
+			BlockNumber:      block.Number().Int64(),
+			Hash:             tx.Hash().String(),
+			Nonce:            int64(tx.Nonce()),
+			TransactionIndex: int64(i),
+			From:             txFromStr,
+			To:               txToStr,
+			Value:            types.BigNumber(fmt.Sprint(tx.Value())),
+			GasPrice:         types.BigNumber(fmt.Sprint(tx.Cost())),
+			Gas:              types.BigNumber(fmt.Sprint(tx.Gas())),
+		}
+		transactions = append(transactions, transaction)
+	}
+
 	blockObj := types.Block{
 		Network:               "ethereum",
-		HeaderHash:            head.Hash(),
+		HeaderHash:            head.Hash().Hex(),
 		BlockHash:             block.HashNoNonce().Hex(),
 		BlockNumber:           block.Number().Int64(),
 		BlockDifficulty:       block.Difficulty().Int64(),
@@ -206,9 +231,10 @@ func (app *EthereumApp) GetBlockFromHeader(
 		BlockExtraData:        fmt.Sprint(block.Extra()),
 		BlockParentHash:       block.ParentHash().String(),
 		BlockSha3Uncles:       head.UncleHash.String(),
-		BlockMiner:            miner.String(),
+		BlockMiner:            block.Hash().Hex(),
 		BlockTransactionsRoot: head.TxHash.String(),
 		BlockStateRoot:        head.Root.String(),
+		Transactions:          transactions,
 	}
 
 	return blockObj, nil
@@ -265,9 +291,9 @@ func (app *EthereumApp) GetTransactionsFromBlock(
 	// head *types.Header,
 	block types.Block,
 ) ([]types.Transaction, error) {
-	hsh := block.HeaderHash
+	hsh := common.HexToHash(block.HeaderHash)
 	// hsh := common.HexToHash(miner)
-	count, err := app.getTransactionCountWithBackoff(block.HeaderHash)
+	count, err := app.getTransactionCountWithBackoff(hsh)
 	if err != nil {
 		fmt.Printf("error in transaction count: %s\n", err.Error())
 	}

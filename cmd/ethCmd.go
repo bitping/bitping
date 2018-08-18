@@ -134,17 +134,19 @@ func StartListening(c *cli.Context) {
 	go client.Run(in, errCh)
 	for {
 		select {
-		case o := <-in:
+		case block := <-in:
 			workerPool.Submit(func() {
 
-				// TODO: Use alice to make this a workflow
-				txs, err := client.GetTransactionsFromBlock(o)
-				if err != nil {
-					log.Printf("Error: %s\n", err.Error())
-					return
-				}
-				fmt.Printf("txs: %#v\n", len(txs))
-				// TODO: push to google pub/sub
+				txs := block.Transactions
+
+				// 	// TODO: Use alice to make this a workflow
+				// 	txs, err := client.GetTransactionsFromBlock(o)
+				// 	if err != nil {
+				// 		log.Printf("Error: %s\n", err.Error())
+				// 		return
+				// 	}
+				fmt.Printf("%d) txs: %#v\n", block.BlockNumber, len(txs))
+				// 	// TODO: push to google pub/sub
 			})
 
 		case err := <-errCh:
