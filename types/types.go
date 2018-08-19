@@ -1,14 +1,12 @@
 package types
 
 import (
-	"github.com/ethereum/go-ethereum/core/types"
+	t "github.com/ethereum/go-ethereum/core/types"
 )
 
-type Header = types.Header
-type BlockchainBlock = types.Block
-type HomesteadSigner = types.HomesteadSigner
-
-type BigNumber string
+type Header = t.Header
+type BlockchainBlock = t.Block
+type HomesteadSigner = t.HomesteadSigner
 
 type BlockChainRunner interface {
 	NewClient()
@@ -46,9 +44,9 @@ type Transaction struct {
 	TransactionIndex int64     `json:"transactionIndex"`
 	From             string    `json:"from"`
 	To               string    `json:"to"`
-	Value            BigNumber `json:"value"`
-	GasPrice         BigNumber `json:"gasPrice"`
-	Gas              BigNumber `json:"gas"`
+	Value            int64 `json:"value"`
+	GasPrice         int64 `json:"gasPrice"`
+	Gas              uint64 `json:"gas"`
 	Input            string    `json:"input"`
 }
 

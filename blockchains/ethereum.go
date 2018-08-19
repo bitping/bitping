@@ -208,9 +208,9 @@ func (app *EthereumApp) GetBlockFromHeader(
 			TransactionIndex: int64(i),
 			From:             txFromStr,
 			To:               txToStr,
-			Value:            types.BigNumber(fmt.Sprint(tx.Value())),
-			GasPrice:         types.BigNumber(fmt.Sprint(tx.Cost())),
-			Gas:              types.BigNumber(fmt.Sprint(tx.Gas())),
+			Value:            tx.Value().Int64(),
+			GasPrice:         tx.Cost().Int64(),
+			Gas:              tx.Gas(),
 		}
 		transactions = append(transactions, transaction)
 	}

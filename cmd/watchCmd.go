@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/auser/bitping/types"
 	"github.com/auser/bitping/work"
 	"github.com/codegangsta/cli"
+	"github.com/thedevsaddam/gojsonq"
 )
 
 var sharedFlags = append([]cli.Flag{}, cli.StringFlag{
@@ -20,7 +22,6 @@ var sharedFlags = append([]cli.Flag{}, cli.StringFlag{
 	cli.StringFlag{
 		Name:  "eos",
 		Usage: "eos address",
-		Value: "http://mainnet.eoscanada.com",
 	},
 	cli.StringFlag{
 		Name:  "eos-p2p",
@@ -69,7 +70,22 @@ func StartListening(c *cli.Context) {
 	for {
 		select {
 		case block := <-in:
-			fmt.Printf("Got a block: %d\n", block.BlockNumber)
+			// Handle querying here
+			workerPool.Submit(func() {
+				dat, err := json.Marshal(block)
+				if err != nil {
+					fmt.Printf("Error marshaling block: %s\n", err.Error())
+					return
+				} else {
+					// fmt.Printf("Running submitted block to worker pool %s\n", dat)
+					jsonString := string(dat[:])
+
+					jq := gojsonq.New().JSONString(jsonString).From("transactions").Where("gas", ">", 100000)
+
+					fmt.Printf("%#v\n", jq.Get())
+
+				}
+			})
 		case err := <-errCh:
 			fmt.Printf("Error listening: %#v\n", err)
 			break
