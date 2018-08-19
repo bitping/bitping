@@ -20,6 +20,17 @@ var sharedFlags = append([]cli.Flag{}, cli.StringFlag{
 	cli.StringFlag{
 		Name:  "eos",
 		Usage: "eos address",
+		Value: "http://mainnet.eoscanada.com",
+	},
+	cli.StringFlag{
+		Name:  "eos-p2p",
+		Usage: "eos p2p address",
+		Value: "peering.mainnet.eoscanada.com:9876",
+	},
+	cli.Int64Flag{
+		Name:  "eos-version",
+		Usage: "eos network version",
+		Value: int64(1206),
 	},
 )
 
@@ -40,6 +51,8 @@ func StartListening(c *cli.Context) {
 
 	var ethAddr = c.String("eth")
 	var eosAddr = c.String("eos")
+	var eosp2pAddr = c.String("eos-p2p")
+	var eosNetworkVersion = c.Int64("eos-version")
 
 	var workerPool = work.New(128)
 	var in = make(chan types.Block)
@@ -51,7 +64,7 @@ func StartListening(c *cli.Context) {
 		runEthereum(ethAddr, in, errCh)
 	}
 	if eosAddr != "" {
-		runEos(eosAddr, in, errCh)
+		runEos(eosAddr, eosp2pAddr, eosNetworkVersion, in, errCh)
 	}
 	for {
 		select {
@@ -79,6 +92,18 @@ func runEthereum(addr string, in chan types.Block, errCh chan error) {
 	go ethClient.Run(in, errCh)
 }
 
-func runEos(addr string, in chan types.Block, errCh chan error) {
-	fmt.Printf("Do this next")
+func runEos(addr string, p2pAddr string, eosNetworkVersion int64, in chan types.Block, errCh chan error) {
+	opts := b.EosOptions{
+		P2PAddr:        p2pAddr,
+		Node:           addr,
+		NetworkVersion: eosNetworkVersion,
+	}
+
+	fmt.Printf("%#v\n", opts)
+
+	eosClient, err := b.NewEosClient(opts)
+	if err != nil {
+		log.Fatal("Error loading Eos client: %s\n", err.Error())
+	}
+	go eosClient.Run(in, errCh)
 }

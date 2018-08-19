@@ -7,7 +7,6 @@ import (
 	"math/big"
 	"time"
 
-	"cloud.google.com/go/pubsub"
 	types "github.com/auser/bitping/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -27,9 +26,8 @@ type EthereumOptions struct {
 
 // TODO: make interface for blockchains
 type EthereumApp struct {
-	Client       *ethclient.Client
-	PubsubClient *pubsub.Client
-	Options      EthereumOptions
+	Client  *ethclient.Client
+	Options EthereumOptions
 	types.BlockChainRunner
 }
 
