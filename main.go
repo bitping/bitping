@@ -20,10 +20,6 @@ func Run(args []string) {
 	app.Usage = "bitpingger"
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
-			Name:  "daemonize",
-			Usage: "run as a app",
-		},
-		cli.BoolFlag{
 			Name:  "nocolor",
 			Usage: "disable color",
 		},
