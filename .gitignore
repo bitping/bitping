@@ -3,3 +3,4 @@ database/*.db
 .ethereum
 .key.json
 ethereum/
+vendor

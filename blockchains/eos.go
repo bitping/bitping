@@ -2,7 +2,6 @@ package bitping
 
 import (
 	"fmt"
-	"log"
 
 	types "github.com/auser/bitping/types"
 	"github.com/eoscanada/eos-go"
@@ -25,19 +24,19 @@ type EosApp struct {
 
 func NewEosClient(opts EosOptions) (*EosApp, error) {
 	fmt.Printf("%#v\n", opts)
-	api := eos.New(opts.Node)
+	// api := eos.New(opts.Node)
 
-	info, err := api.GetInfo()
-	if err != nil {
-		log.Fatal("Error getting info: %#v\n", err)
-	}
+	// info, err := api.GetInfo()
+	// if err != nil {
+	// 	log.Fatal("Error getting info: %#v\n", err)
+	// }
 
-	cID := info.ChainID
-	p2pApi := p2p.NewClient(opts.P2PAddr, cID, uint16(opts.NetworkVersion))
+	// cID := info.ChainID
+	// p2pApi := p2p.NewClient(opts.P2PAddr, cID, uint16(opts.NetworkVersion))
 	app := &EosApp{
-		Client:  api,
-		P2PApi:  p2pApi,
-		Info:    info,
+		// 	Client:  api,
+		// 	P2PApi:  p2pApi,
+		// 	Info:    info,
 		Options: opts,
 	}
 
@@ -45,12 +44,12 @@ func NewEosClient(opts EosOptions) (*EosApp, error) {
 }
 
 type blockHandler struct {
-	p2p.Handler
+	// p2p.Handler
 }
 
-func (b *blockHandler) Handle(msg p2p.Message) {
-	route := msg.Route
-	fmt.Printf("msg: %#v\n", route)
+func (b *blockHandler) Handle(msg interface{}) {
+	// route := msg.Route
+	// fmt.Printf("msg: %#v\n", route)
 }
 
 func (app *EosApp) Run(
@@ -59,24 +58,24 @@ func (app *EosApp) Run(
 	errChan chan error,
 ) {
 
-	client := app.P2PApi
-	info := app.Info
+	// client := app.P2PApi
+	// info := app.Info
 
-	b := blockHandler{}
+	// b := blockHandler{}
 
-	client.RegisterHandlerFunc(b.Handle)
-	fmt.Printf("Registered\n")
+	// client.RegisterHandlerFunc(b.Handle)
+	// fmt.Printf("Registered\n")
 
-	err := client.ConnectAndSync(
-		info.HeadBlockNum,
-		info.HeadBlockID,
-		info.HeadBlockTime.Time,
-		0,
-		make([]byte, 32))
-	//err = client.ConnectRecent()
-	if err != nil {
-		log.Fatal("Error: %s\n", err.Error())
-	}
+	// err := client.ConnectAndSync(
+	// 	info.HeadBlockNum,
+	// 	info.HeadBlockID,
+	// 	info.HeadBlockTime.Time,
+	// 	0,
+	// 	make([]byte, 32))
+	// //err = client.ConnectRecent()
+	// if err != nil {
+	// 	log.Fatal("Error: %s\n", err.Error())
+	// }
 
 	// out, err := app.Client.GetBlockByNum(6342084)
 	// if err != nil {

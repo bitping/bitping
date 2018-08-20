@@ -21,7 +21,7 @@ func Run(args []string) {
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "daemonize",
-			Usage: "run as a daemon",
+			Usage: "run as a app",
 		},
 	}
 	app.Commands = []cli.Command{cmd.WatchCmd}
@@ -29,7 +29,7 @@ func Run(args []string) {
 }
 
 func readVersion() string {
-	var version string = "0.0.0"
+	var version = "0.0.0"
 	da, err := ioutil.ReadFile("./Version")
 	if err == nil {
 		version = string(da)

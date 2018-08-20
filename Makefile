@@ -13,7 +13,13 @@ os = $(word 1, $@)
 LDFLAGS = -ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.branch=${BRANCH}"
 
 deps:
-	go get -u ./...
+	dep ensure
+
+deps_first_time:
+	go get -u github.com/ethereum/go-ethereum
+	cp -r \
+  "${GOPATH}/src/github.com/ethereum/go-ethereum/crypto/secp256k1/libsecp256k1" \
+  "vendor/github.com/ethereum/go-ethereum/crypto/secp256k1/"
 
 build:
 	go build ${LDFLAGS} -o $(CURR_DIR)/build/bin/$(BINARY)
