@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"runtime"
+	"text/tabwriter"
 
 	"github.com/codegangsta/cli"
 	"github.com/logrusorgru/aurora"
@@ -38,19 +40,29 @@ var InfoCmd = cli.Command{
 
 func displayBitpingInfo(c *cli.Context) {
 	au = aurora.NewAurora(!c.GlobalBool("nocolor"))
-	msg := fmt.Sprintf(`%s
-OS: %s
-Go version: %v
-Commit: %s
-Branch: %s
-Built at %s
-`,
-		au.Green(AppName),
-		au.Green(OS),
-		au.Green(GoVersion),
-		au.Green(Commit),
-		au.Green(Branch),
-		au.Green(BuildTime))
 
-	fmt.Println(msg)
+	w := tabwriter.NewWriter(os.Stdout, 10, 4, 4, ' ', tabwriter.DiscardEmptyColumns)
+
+	fmt.Fprintf(w, "OS\t%s\n", au.Green(AppName))
+	fmt.Fprintf(w, "Branch\t%s\n", au.Green(Branch))
+	fmt.Fprintf(w, "Commit\t%s\n", au.Green(Commit))
+	fmt.Fprintf(w, "Go version\t%s\n", au.Green(GoVersion))
+	fmt.Fprintf(w, "Build time\t%s\n", au.Green(BuildTime))
+
+	w.Flush()
+	// 	msg := fmt.Sprintf(`%s
+	// OS: %s
+	// Go version: %v
+	// Commit: %s
+	// Branch: %s
+	// Built at %s
+	// `,
+	// 		au.Green(AppName),
+	// 		au.Green(OS),
+	// 		au.Green(GoVersion),
+	// 		au.Green(Commit),
+	// 		au.Green(Branch),
+	// 		au.Green(BuildTime))
+
+	// 	fmt.Println(msg)
 }

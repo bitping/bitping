@@ -8,7 +8,7 @@ CURR_DIR := $(shell pwd)
 PKGS := $(shell go list ./... | grep -v vendor)
 
 COMMIT = $(shell git rev-parse HEAD | cut -c 1-6)
-BUILD_TIME = $(shell date -u '+%Y-%m-%d_%I:%M:%S%p')
+BUILD_TIME = $(shell date -u '+%Y-%m-%dT%I:%M:%S%p')
 
 PLATFORMS := linux darwin
 os = $(word 1, $@)
@@ -28,6 +28,7 @@ LDFLAGS =-ldflags "-X github.com/auser/bitping/cmd.AppName=$(BINARY) -X github.c
 
 deps:
 	dep ensure
+	make deps_first_time
 
 deps_first_time:
 	go get -u github.com/ethereum/go-ethereum
