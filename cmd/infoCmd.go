@@ -5,9 +5,11 @@ import (
 	"runtime"
 
 	"github.com/codegangsta/cli"
+	"github.com/logrusorgru/aurora"
 )
 
 var (
+	au aurora.Aurora
 	// AppName of the app
 	AppName = "unset"
 	// Version of the app
@@ -35,13 +37,20 @@ var InfoCmd = cli.Command{
 }
 
 func displayBitpingInfo(c *cli.Context) {
+	au = aurora.NewAurora(!c.GlobalBool("nocolor"))
 	msg := fmt.Sprintf(`%s
 OS: %s
-GoVersion: %v
+Go version: %v
 Commit: %s
 Branch: %s
 Built at %s
-`, AppName, OS, GoVersion, BuildTime, Branch, Commit)
+`,
+		au.Green(AppName),
+		au.Green(OS),
+		au.Green(GoVersion),
+		au.Green(Commit),
+		au.Green(Branch),
+		au.Green(BuildTime))
 
 	fmt.Println(msg)
 }

@@ -23,6 +23,10 @@ func Run(args []string) {
 			Name:  "daemonize",
 			Usage: "run as a app",
 		},
+		cli.BoolFlag{
+			Name:  "nocolor",
+			Usage: "disable color",
+		},
 	}
 	app.Commands = []cli.Command{cmd.WatchCmd, cmd.DbCmd, cmd.InfoCmd}
 	app.Run(args)

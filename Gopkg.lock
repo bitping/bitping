@@ -2,26 +2,6 @@
 
 
 [[projects]]
-  name = "cloud.google.com/go"
-  packages = [
-    "compute/metadata",
-    "iam",
-    "internal/optional",
-    "internal/version",
-    "pubsub",
-    "pubsub/apiv1",
-    "pubsub/internal/distribution"
-  ]
-  revision = "64a2037ec6be8a4b0c1d1f706ed35b428b989239"
-  version = "v0.26.0"
-
-[[projects]]
-  name = "contrib.go.opencensus.io/exporter/stackdriver"
-  packages = ["propagation"]
-  revision = "2b93072101d466aa4120b3c23c2e1b08af01541c"
-  version = "v0.6.0"
-
-[[projects]]
   name = "github.com/btcsuite/btcd"
   packages = ["btcec"]
   revision = "2e60448ffcc6bf78332d1fe590260095f554dd78"
@@ -88,30 +68,10 @@
   version = "v1.5.4"
 
 [[projects]]
-  name = "github.com/golang/protobuf"
-  packages = [
-    "proto",
-    "protoc-gen-go/descriptor",
-    "ptypes",
-    "ptypes/any",
-    "ptypes/duration",
-    "ptypes/empty",
-    "ptypes/timestamp"
-  ]
-  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
-  version = "v1.2.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/golang/snappy"
   packages = ["."]
   revision = "2e65f85255dbc3072edf28d6b5b8efc472979f5a"
-
-[[projects]]
-  name = "github.com/googleapis/gax-go"
-  packages = ["."]
-  revision = "317e0006254c44a0ac427cc52a0e083ff0b9622f"
-  version = "v2.0.0"
 
 [[projects]]
   branch = "master"
@@ -130,6 +90,12 @@
   packages = ["."]
   revision = "8eab2debe79d12b7bd3d10653910df25fa9552ba"
   version = "1.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/logrusorgru/aurora"
+  packages = ["."]
+  revision = "d694e6f975a9109e2b063829d563a7c153c4b53c"
 
 [[projects]]
   name = "github.com/onsi/ginkgo"
@@ -257,26 +223,6 @@
   revision = "1e39f55115634cad2c504631c8bfcc292f2c9c55"
 
 [[projects]]
-  name = "go.opencensus.io"
-  packages = [
-    ".",
-    "internal",
-    "internal/tagencoding",
-    "plugin/ocgrpc",
-    "plugin/ochttp",
-    "plugin/ochttp/propagation/b3",
-    "stats",
-    "stats/internal",
-    "stats/view",
-    "tag",
-    "trace",
-    "trace/internal",
-    "trace/propagation"
-  ]
-  revision = "7b558058b7cc960667590e5413ef55157b06652e"
-  version = "v0.15.0"
-
-[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ripemd160"]
@@ -287,40 +233,12 @@
   name = "golang.org/x/net"
   packages = [
     "context",
-    "context/ctxhttp",
     "html",
     "html/atom",
     "html/charset",
-    "http/httpguts",
-    "http2",
-    "http2/hpack",
-    "idna",
-    "internal/timeseries",
-    "trace",
     "websocket"
   ]
   revision = "aaf60122140d3fcf75376d319f0554393160eb50"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/oauth2"
-  packages = [
-    ".",
-    "google",
-    "internal",
-    "jws",
-    "jwt"
-  ]
-  revision = "f720f1faee02c1fb456408c22886169405f239aa"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/sync"
-  packages = [
-    "errgroup",
-    "semaphore"
-  ]
-  revision = "1d60e4601c6fd243af51cc01ddf169918a5407ca"
 
 [[projects]]
   branch = "master"
@@ -331,8 +249,6 @@
 [[projects]]
   name = "golang.org/x/text"
   packages = [
-    "collate",
-    "collate/build",
     "encoding",
     "encoding/charmap",
     "encoding/htmlindex",
@@ -343,103 +259,16 @@
     "encoding/simplifiedchinese",
     "encoding/traditionalchinese",
     "encoding/unicode",
-    "internal/colltab",
     "internal/gen",
     "internal/tag",
-    "internal/triegen",
-    "internal/ucd",
     "internal/utf8internal",
     "language",
     "runes",
-    "secure/bidirule",
     "transform",
-    "unicode/bidi",
-    "unicode/cldr",
-    "unicode/norm",
-    "unicode/rangetable"
+    "unicode/cldr"
   ]
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
-
-[[projects]]
-  branch = "master"
-  name = "google.golang.org/api"
-  packages = [
-    "googleapi/transport",
-    "internal",
-    "iterator",
-    "option",
-    "support/bundler",
-    "transport",
-    "transport/grpc",
-    "transport/http"
-  ]
-  revision = "e21acd801f91da814261b938941d193bb036441a"
-
-[[projects]]
-  name = "google.golang.org/appengine"
-  packages = [
-    ".",
-    "internal",
-    "internal/app_identity",
-    "internal/base",
-    "internal/datastore",
-    "internal/log",
-    "internal/modules",
-    "internal/remote_api",
-    "internal/socket",
-    "internal/urlfetch",
-    "socket",
-    "urlfetch"
-  ]
-  revision = "b1f26356af11148e710935ed1ac8a7f5702c7612"
-  version = "v1.1.0"
-
-[[projects]]
-  branch = "master"
-  name = "google.golang.org/genproto"
-  packages = [
-    "googleapis/api/annotations",
-    "googleapis/iam/v1",
-    "googleapis/pubsub/v1",
-    "googleapis/rpc/status",
-    "protobuf/field_mask"
-  ]
-  revision = "c66870c02cf823ceb633bcd05be3c7cda29976f4"
-
-[[projects]]
-  name = "google.golang.org/grpc"
-  packages = [
-    ".",
-    "balancer",
-    "balancer/base",
-    "balancer/roundrobin",
-    "codes",
-    "connectivity",
-    "credentials",
-    "credentials/oauth",
-    "encoding",
-    "encoding/proto",
-    "grpclog",
-    "internal",
-    "internal/backoff",
-    "internal/channelz",
-    "internal/envconfig",
-    "internal/grpcrand",
-    "internal/transport",
-    "keepalive",
-    "metadata",
-    "naming",
-    "peer",
-    "resolver",
-    "resolver/dns",
-    "resolver/passthrough",
-    "stats",
-    "status",
-    "tap"
-  ]
-  revision = "32fb0ac620c32ba40a4626ddf94d90d12cce3455"
-  version = "v1.14.0"
 
 [[projects]]
   name = "gopkg.in/fsnotify/fsnotify.v1"
@@ -473,6 +302,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8ef9a33622d7792fda25491aaa572e9f1255aa5defb5ad0bbfc1843df19eb735"
+  inputs-digest = "4adae1faeb2b39191053c029280fe5b2e8af3df1ecf454c26d9aea5b4b2cc463"
   solver-name = "gps-cdcl"
   solver-version = 1

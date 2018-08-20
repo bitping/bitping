@@ -20,6 +20,8 @@ ERROR_COLOR = \033[0;31m
 WARN_COLOR  = \033[0;33m
 NO_COLOR    = \033[m
 
+BUILD_COM = "Building..."
+
 LDFLAGS =-ldflags "-X github.com/auser/bitping/cmd.AppName=$(BINARY) -X github.com/auser/bitping/cmd.Branch=$(BRANCH) -X github.com/auser/bitping/cmd.Version=$(VERSION) -X github.com/auser/bitping/cmd.Commit=$(COMMIT) -X github.com/auser/bitping/cmd.BuildTime=$(BUILD_TIME)"
 
 # LDFLAGS=-ldflags='-X "cmd.AppName=${BINARY}" -X "cmd.Version=${VERSION}" -X "cmd.Commit=${COMMIT}" -X "cmd.Branch=${BRANCH}" -X "cmd.BuildTime=$(shell date +%FT%T%Z)"'
@@ -34,7 +36,7 @@ deps_first_time:
   "vendor/github.com/ethereum/go-ethereum/crypto/secp256k1/"
 
 build:
-	@printf "%b\n" "$(COM_COLOR)$(COM_STRING)$(OBJ_COLOR)$(@)$(NO_COLOR)\n";
+	@printf "%b\n" "$(COM_COLOR)$(BUILD_COM)$(OBJ_COLOR)$(NO_COLOR)\n";
 	@go build ${LDFLAGS} -o $(CURR_DIR)/build/bin/$(BINARY)
 
 .PHONY: $(PLATFORMS) build
