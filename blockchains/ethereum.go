@@ -194,6 +194,7 @@ func (app *EthereumApp) GetBlockFromHeader(
 		var txFromStr string = "unknown"
 		var txToStr string = "unknown"
 		if msg, err := tx.AsMessage(types.HomesteadSigner{}); err != nil {
+
 			txFromStr = msg.From().Hex()
 			if msg.To() != nil {
 				txToStr = msg.To().Hex()
