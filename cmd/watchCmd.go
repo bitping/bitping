@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"cloud.google.com/go/pubsub"
-
 	b "github.com/auser/bitping/blockchains"
 	"github.com/auser/bitping/types"
 	"github.com/auser/bitping/work"
@@ -34,12 +32,6 @@ var sharedFlags = append([]cli.Flag{}, cli.StringFlag{
 		Value: int64(1206),
 	},
 )
-
-var (
-	PubsubClient *pubsub.Client
-)
-
-const PubsubTopicID = "ethereum-block-update"
 
 var WatchCmd = cli.Command{
 	Name:   "watch",

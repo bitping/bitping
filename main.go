@@ -24,7 +24,7 @@ func Run(args []string) {
 			Usage: "run as a app",
 		},
 	}
-	app.Commands = []cli.Command{cmd.WatchCmd}
+	app.Commands = []cli.Command{cmd.WatchCmd, cmd.DbCmd, cmd.InfoCmd}
 	app.Run(args)
 }
 
