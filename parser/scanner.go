@@ -127,7 +127,7 @@ func (s *Scanner) scanDigit() (tok Token, lit string) {
 	for {
 		if ch := s.read(); ch == eof {
 			break
-		} else if !isDigit(ch) {
+		} else if !isDigit(ch) && !isExponential(ch) {
 			break
 		} else {
 			_, _ = buf.WriteRune(ch)
@@ -174,6 +174,10 @@ func isLetter(ch rune) bool {
 // isDigit returns true if the rune is a digit
 func isDigit(ch rune) bool {
 	return (ch >= '0' && ch <= '9')
+}
+
+func isExponential(ch rune) bool {
+	return ch == 'e'
 }
 
 func isPeriod(ch rune) bool {
