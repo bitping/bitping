@@ -7,15 +7,17 @@ import (
 	"strings"
 )
 
+// Scanner represents a single scanner object
 type Scanner struct {
 	r *bufio.Reader
 }
 
+// NewScanner creates a new Scanner object
 func NewScanner(r io.Reader) *Scanner {
 	return &Scanner{r: bufio.NewReader(r)}
 }
 
-// read reads the next rune from the buffered reader
+// Scan reads the next rune from the buffered reader
 // Returns the rune(0) if an error ocurrs or io.EOF is returned)
 func (s *Scanner) Scan() (tok Token, lit string) {
 	ch := s.read()
