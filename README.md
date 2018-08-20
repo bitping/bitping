@@ -25,7 +25,7 @@ Basically, the way that this works is that `bitping` listens on all the availabl
 Blockchain status:
 
 - [x] ethereum
-- [ ] bitpoing
+- [ ] btc
 - [ ] eos
 
 Feel free to add another blockchain here. We'll add the as we see fit and the need. To add a blockchain to the `watch` command is straight-forward. Each blockchain needs to implement the `blockchain` interface and implement the following methods:
