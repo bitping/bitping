@@ -194,6 +194,7 @@ func (app *EthereumApp) GetBlockFromHeader(
 		var txFromStr string = "unknown"
 		var txToStr string = "unknown"
 		if msg, err := tx.AsMessage(types.HomesteadSigner{}); err != nil {
+
 			txFromStr = msg.From().Hex()
 			if msg.To() != nil {
 				txToStr = msg.To().Hex()
@@ -208,9 +209,9 @@ func (app *EthereumApp) GetBlockFromHeader(
 			TransactionIndex: int64(i),
 			From:             txFromStr,
 			To:               txToStr,
-			Value:            types.BigNumber(fmt.Sprint(tx.Value())),
-			GasPrice:         types.BigNumber(fmt.Sprint(tx.Cost())),
-			Gas:              types.BigNumber(fmt.Sprint(tx.Gas())),
+			Value:            tx.Value().Int64(),
+			GasPrice:         tx.Cost().Int64(),
+			Gas:              tx.Gas(),
 		}
 		transactions = append(transactions, transaction)
 	}
