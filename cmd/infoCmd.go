@@ -43,7 +43,8 @@ func displayBitpingInfo(c *cli.Context) {
 
 	w := tabwriter.NewWriter(os.Stdout, 10, 4, 4, ' ', tabwriter.DiscardEmptyColumns)
 
-	fmt.Fprintf(w, "OS\t%s\n", au.Green(AppName))
+	fmt.Fprintf(w, "Binary\t%s\n", au.Green(AppName))
+	fmt.Fprintf(w, "OS\t%s\n", au.Green(OS))
 	fmt.Fprintf(w, "Branch\t%s\n", au.Green(Branch))
 	fmt.Fprintf(w, "Commit\t%s\n", au.Green(Commit))
 	fmt.Fprintf(w, "Go version\t%s\n", au.Green(GoVersion))
