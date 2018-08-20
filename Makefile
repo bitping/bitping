@@ -13,9 +13,12 @@ BUILD_TIME = $(shell date -u '+%Y-%m-%d_%I:%M:%S%p')
 PLATFORMS := linux darwin
 os = $(word 1, $@)
 
-green = $(shell echo -e '\x1b[32;01m$1\x1b[0m')
-yellow = $(shell echo -e '\x1b[33;01m$1\x1b[0m')
-red = $(shell echo -e '\x1b[33;31m$1\x1b[0m')
+COM_COLOR   = \033[0;34m
+OBJ_COLOR   = \033[0;36m
+OK_COLOR    = \033[0;32m
+ERROR_COLOR = \033[0;31m
+WARN_COLOR  = \033[0;33m
+NO_COLOR    = \033[m
 
 LDFLAGS =-ldflags "-X github.com/auser/bitping/cmd.AppName=$(BINARY) -X github.com/auser/bitping/cmd.Branch=$(BRANCH) -X github.com/auser/bitping/cmd.Version=$(VERSION) -X github.com/auser/bitping/cmd.Commit=$(COMMIT) -X github.com/auser/bitping/cmd.BuildTime=$(BUILD_TIME)"
 
@@ -31,8 +34,8 @@ deps_first_time:
   "vendor/github.com/ethereum/go-ethereum/crypto/secp256k1/"
 
 build:
-	@echo $(green)Building...
-	go build ${LDFLAGS} -o $(CURR_DIR)/build/bin/$(BINARY)
+	@printf "%b\n" "$(COM_COLOR)$(COM_STRING)$(OBJ_COLOR)$(@)$(NO_COLOR)\n";
+	@go build ${LDFLAGS} -o $(CURR_DIR)/build/bin/$(BINARY)
 
 .PHONY: $(PLATFORMS) build
 
