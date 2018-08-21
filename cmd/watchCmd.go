@@ -48,6 +48,7 @@ func StartListening(c *cli.Context) {
 	var eosNetworkVersion = c.Int64("eos-version")
 
 	var workerPool = work.New(128)
+	defer workerPool.Stop()
 	var in = make(chan types.Block)
 	var errCh = make(chan error)
 	// var done = make(chan struct{})
@@ -72,7 +73,7 @@ func StartListening(c *cli.Context) {
 					// fmt.Printf("Running submitted block to worker pool %s\n", dat)
 					jsonString := string(dat[:])
 
-					jq := gojsonq.New().JSONString(jsonString).From("transactions").Where("gas", ">", 100000)
+					jq := gojsonq.New().JSONString(jsonString).From("transactions").Where("gas", ">", 1500)
 
 					fmt.Printf("%#v\n", jq.Get())
 
@@ -86,7 +87,6 @@ func StartListening(c *cli.Context) {
 	// END SETUP
 
 	fmt.Printf("Shutdown network\n")
-	workerPool.Stop()
 }
 
 func runEthereum(addr string, in chan types.Block, errCh chan error) {
