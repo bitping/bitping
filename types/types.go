@@ -15,8 +15,37 @@ type BlockChainRunner interface {
 
 type Map map[string]interface{}
 
+type BitcoinBlock struct {
+	Height            uint64
+	StrippedSize      uint64
+	Weight            uint64
+	Version           string
+	VersionHex        string
+	Merkleroot        string
+	Time              uint64
+	MedianTime        uint64
+	Bits              string
+	Chainwork         string
+	PreviousBlockHash string
+}
+
+type EthereumBlock struct {
+	Sha3Uncles       string   `json:"sha3Uncles"`
+	LogsBloom        string   `json:"logsBloom"`
+	TransactionsRoot string   `json:"transactionsRoot"`
+	StateRoot        string   `json:"stateRoot"`
+	Miner            string   `json:"miner"`
+	TotalDifficulty  int64    `json:"totalDifficulty"`
+	ExtraData        string   `json:"extraData"`
+	GasLimit         uint64   `json:"gasLimit"`
+	GasUsed          uint64   `json:"gasUsed"`
+	TimeStamp        int64    `json:"timestamp"`
+	Uncles           []string `json:"uncles"`
+}
+
 type Block struct {
-	Map
+	*BitcoinBlock
+	*EthereumBlock
 
 	Difficulty int64   `json:"difficulty"`
 	Hash       string  `json:"hash"`
@@ -32,30 +61,7 @@ type Block struct {
 	Transactions []Transaction `json:"transactions"`
 
 	// Bitcoin Data
-	// Height
-	// StrippedSize
-	// Weight
-	// Version
-	// VersionHex
-	// Merkleroot
-	// Time
-	// MedianTime
-	// Bits
-	// Chainwork
-	// PreviousBlockHash
-
 	// Ethereum Data
-	// Sha3Uncles       string   `json:"Sha3Uncles"`
-	// LogsBloom        string   `json:"LogsBloom"`
-	// TransactionsRoot string   `json:"TransactionsRoot"`
-	// StateRoot        string   `json:"StateRoot"`
-	// Miner            string   `json:"Miner"`
-	// TotalDifficulty  int64    `json:"TotalDifficulty"`
-	// ExtraData        string   `json:"ExtraData"`
-	// GasLimit         uint64   `json:"GasLimit"`
-	// GasUsed          uint64   `json:"GasUsed"`
-	// TimeStamp        int64    `json:"Timestamp"`
-	// Uncles           []string `json:"Uncles"`
 }
 
 // UTX is address
