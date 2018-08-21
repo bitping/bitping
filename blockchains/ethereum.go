@@ -220,7 +220,7 @@ func (app *EthereumApp) GetFromHeader(
 	}
 
 	blockObj := types.Block{
-		Difficulty: block.Difficulty().Int64(),
+		Difficulty: float64(block.Difficulty().Int64()),
 		Hash:       block.HashNoNonce().Hex(),
 		HeaderHash: head.Hash().Hex(),
 		Network:    "ethereum",
