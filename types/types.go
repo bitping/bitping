@@ -13,41 +13,64 @@ type BlockChainRunner interface {
 	Run()
 }
 
+type Map map[string]interface{}
+
 type Block struct {
-	HeaderHash            string        `json:"headerHash"`
-	Network               string        `json:"network"`
-	BlockNumber           int64         `json:"blockNumber"`
-	BlockHash             string        `json:"blockHash"`
-	BlockParentHash       string        `json:"blockParentHash"`
-	BlockNonce            string        `json:"blockNonce"`
-	BlockSha3Uncles       string        `json:"blockSha3Uncles"`
-	BlockLogsBloom        string        `json:"blockLogsBloom"`
-	BlockTransactionsRoot string        `json:"blockTransactionsRoot"`
-	BlockStateRoot        string        `json:"blockStateRoot"`
-	BlockMiner            string        `json:"blockMiner"`
-	BlockDifficulty       int64         `json:"blockDifficulty"`
-	BlockTotalDifficulty  int64         `json:"blockTotalDifficulty"`
-	BlockExtraData        string        `json:"blockExtraData"`
-	BlockSize             float64       `json:"blockSize"`
-	BlockGasLimit         uint64        `json:"blockGasLimit"`
-	BlockGasUsed          uint64        `json:"blockGasUsed"`
-	BlockTimeStamp        int64         `json:"blockTimestamp"`
-	BlockUncles           []string      `json:"blockUncles"`
-	Transactions          []Transaction `json:"transactions"`
+	Map
+
+	Difficulty int64   `json:"difficulty"`
+	Hash       string  `json:"hash"`
+	HeaderHash string  `json:"headerHash"`
+	Network    string  `json:"network"`
+	Nonce      string  `json:"nonce"`
+	Number     int64   `json:"number"`
+	Size       float64 `json:"size"`
+
+	// BTC PreviousBlockHash
+	ParentHash string `json:"parentHash"`
+
+	Transactions []Transaction `json:"transactions"`
+
+	// Bitcoin Data
+	// Height
+	// StrippedSize
+	// Weight
+	// Version
+	// VersionHex
+	// Merkleroot
+	// Time
+	// MedianTime
+	// Bits
+	// Chainwork
+	// PreviousBlockHash
+
+	// Ethereum Data
+	// Sha3Uncles       string   `json:"Sha3Uncles"`
+	// LogsBloom        string   `json:"LogsBloom"`
+	// TransactionsRoot string   `json:"TransactionsRoot"`
+	// StateRoot        string   `json:"StateRoot"`
+	// Miner            string   `json:"Miner"`
+	// TotalDifficulty  int64    `json:"TotalDifficulty"`
+	// ExtraData        string   `json:"ExtraData"`
+	// GasLimit         uint64   `json:"GasLimit"`
+	// GasUsed          uint64   `json:"GasUsed"`
+	// TimeStamp        int64    `json:"Timestamp"`
+	// Uncles           []string `json:"Uncles"`
 }
 
+// UTX is address
 type Transaction struct {
-	BlockHash        string    `json:"blockHash"`
-	BlockNumber      int64     `json:"blockNumber"`
-	Hash             string    `json:"hash"`
-	Nonce            int64     `json:"nonce"`
-	TransactionIndex int64     `json:"transactionIndex"`
-	From             string    `json:"from"`
-	To               string    `json:"to"`
-	Value            int64 `json:"value"`
-	GasPrice         int64 `json:"gasPrice"`
+	BlockHash        string `json:"blockHash"`
+	BlockNumber      int64  `json:"blockNumber"`
+	Hash             string `json:"hash"`
+	Nonce            int64  `json:"nonce"`
+	TransactionIndex int64  `json:"transactionIndex"`
+	From             string `json:"from"`
+	To               string `json:"to"`
+	Value            int64  `json:"value"`
+	GasPrice         int64  `json:"gasPrice"`
 	Gas              uint64 `json:"gas"`
-	Input            string    `json:"input"`
+	Input            string `json:"input"`
 }
 
 type Log struct {

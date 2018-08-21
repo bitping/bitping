@@ -1,4 +1,4 @@
-package bitping
+package blockchains
 
 import (
 	"context"
@@ -58,23 +58,23 @@ func (app *EthereumApp) Run(
 	// test
 	var headsCh = make(chan *types.Header)
 	var errCh = make(chan error)
-	go app.SubscribeToNewBlocks(headsCh, errCh)
+	go app.SubscribeToNews(headsCh, errCh)
 
 	for {
 		select {
 		case err := <-errCh:
 			fmt.Printf("Got an error in client.Run(): %v\n", err)
 			// TODO: Reconnect here
-			// go app.SubscribeToNewBlocks(headsCh, errCh)
+			// go app.SubscribeToNews(headsCh, errCh)
 		case head := <-headsCh:
-			block, err := app.GetBlockFromHeader(head)
+			block, err := app.GetFromHeader(head)
 			if err != nil {
 				fmt.Printf("Error happened: %s\n", err.Error())
 				errChan <- err
 			} else {
 				blockChan <- block
 			}
-			// transactions, err := app.makeTransactionsFromBlock(block)
+			// transactions, err := app.makeTransactionsFrom(block)
 			// if err != nil {
 			// 	errChan <- err
 			// } else {
@@ -93,7 +93,7 @@ func (app *EthereumApp) GetNetwork() *big.Int {
 	return networkId
 }
 
-func (app *EthereumApp) SubscribeToNewBlocks(
+func (app *EthereumApp) SubscribeToNews(
 	heads chan *types.Header,
 	errCh chan error,
 ) {
@@ -116,7 +116,7 @@ func (app *EthereumApp) SubscribeToNewBlocks(
 	}
 }
 
-func (app *EthereumApp) getBlockByNumWithBackoff(num *big.Int) (*types.BlockchainBlock, error) {
+func (app *EthereumApp) getByNumWithBackoff(num *big.Int) (*types.BlockchainBlock, error) {
 	ctx := context.Background()
 	var (
 		block *types.BlockchainBlock
@@ -174,13 +174,13 @@ func (app *EthereumApp) getTransactionCountWithBackoff(hsh common.Hash) (uint, e
 	return count, nil
 }
 
-func (app *EthereumApp) GetBlockFromHeader(
+func (app *EthereumApp) GetFromHeader(
 	head *types.Header,
 ) (types.Block, error) {
 	// ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 
 	// right now, this is blocking... do we want it to block?
-	block, err := app.getBlockByNumWithBackoff(head.Number)
+	block, err := app.getByNumWithBackoff(head.Number)
 	if err != nil {
 		return types.Block{}, err
 	}
@@ -217,23 +217,26 @@ func (app *EthereumApp) GetBlockFromHeader(
 	}
 
 	blockObj := types.Block{
-		Network:               "ethereum",
-		HeaderHash:            head.Hash().Hex(),
-		BlockHash:             block.HashNoNonce().Hex(),
-		BlockNumber:           block.Number().Int64(),
-		BlockDifficulty:       block.Difficulty().Int64(),
-		BlockTotalDifficulty:  block.Difficulty().Int64(), // make sense?
-		BlockNonce:            fmt.Sprint(block.Nonce()),
-		BlockSize:             float64(block.Size()),
-		BlockGasUsed:          block.GasUsed(),
-		BlockGasLimit:         block.GasLimit(),
-		BlockExtraData:        fmt.Sprint(block.Extra()),
-		BlockParentHash:       block.ParentHash().String(),
-		BlockSha3Uncles:       head.UncleHash.String(),
-		BlockMiner:            block.Hash().Hex(),
-		BlockTransactionsRoot: head.TxHash.String(),
-		BlockStateRoot:        head.Root.String(),
-		Transactions:          transactions,
+		Difficulty: block.Difficulty().Int64(),
+		Hash:       block.HashNoNonce().Hex(),
+		HeaderHash: head.Hash().Hex(),
+		Network:    "ethereum",
+		Nonce:      fmt.Sprint(block.Nonce()),
+		Number:     block.Number().Int64(),
+		Size:       float64(block.Size()),
+		ParentHash: block.ParentHash().String(),
+
+		Map: types.Map{
+			"totalDifficulty":  block.Difficulty().Int64(), // make sense?
+			"gasUsed":          block.GasUsed(),
+			"gasLimit":         block.GasLimit(),
+			"extraData":        fmt.Sprint(block.Extra()),
+			"sha3Uncles":       head.UncleHash.String(),
+			"miner":            block.Hash().Hex(),
+			"transactionsRoot": head.TxHash.String(),
+			"stateRoot":        head.Root.String(),
+			"transactions":     transactions,
+		},
 	}
 
 	return blockObj, nil

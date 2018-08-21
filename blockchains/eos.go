@@ -1,4 +1,4 @@
-package bitping
+package blockchains
 
 import (
 	"fmt"
