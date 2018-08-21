@@ -226,17 +226,18 @@ func (app *EthereumApp) GetFromHeader(
 		Size:       float64(block.Size()),
 		ParentHash: block.ParentHash().String(),
 
-		Map: types.Map{
-			"totalDifficulty":  block.Difficulty().Int64(), // make sense?
-			"gasUsed":          block.GasUsed(),
-			"gasLimit":         block.GasLimit(),
-			"extraData":        fmt.Sprint(block.Extra()),
-			"sha3Uncles":       head.UncleHash.String(),
-			"miner":            block.Hash().Hex(),
-			"transactionsRoot": head.TxHash.String(),
-			"stateRoot":        head.Root.String(),
-			"transactions":     transactions,
+		EthereumBlock: &types.EthereumBlock{
+			TotalDifficulty:  block.Difficulty().Int64(), // make sense?
+			GasUsed:          block.GasUsed(),
+			GasLimit:         block.GasLimit(),
+			ExtraData:        fmt.Sprint(block.Extra()),
+			Sha3Uncles:       head.UncleHash.String(),
+			Miner:            block.Hash().Hex(),
+			TransactionsRoot: head.TxHash.String(),
+			StateRoot:        head.Root.String(),
 		},
+
+		Transactions: transactions,
 	}
 
 	return blockObj, nil

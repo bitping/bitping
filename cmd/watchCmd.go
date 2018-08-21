@@ -72,6 +72,7 @@ func StartListening(c *cli.Context) {
 				} else {
 					// fmt.Printf("Running submitted block to worker pool %s\n", dat)
 					jsonString := string(dat[:])
+					// fmt.Printf("%s\n", jsonString)
 
 					jq := gojsonq.New().JSONString(jsonString).From("transactions").Where("gas", ">", 1500)
 
