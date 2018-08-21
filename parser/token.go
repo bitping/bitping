@@ -30,4 +30,16 @@ const (
 
 	// SELECT keys to pass into the event
 	SELECT
+	// AND groups multiple conditional statements
+	AND
+	// EQUAL looks if items are equal
+	EQUAL
+	// NOT says an item is not something
+	NOT
+	// LESSTHAN says item is less than
+	LESSTHAN
+	// GREATERTHAN says an item is greater than
+	GREATERTHAN
+	// ORDER sets the ordering
+	ORDER
 )

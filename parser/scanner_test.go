@@ -27,6 +27,11 @@ func TestScanner_Scan(t *testing.T) {
 
 		// Keywords
 		{s: `SELECT`, tok: parser.SELECT, lit: "SELECT"},
+		{s: `AND`, tok: parser.AND, lit: "AND"},
+		{s: `<`, tok: parser.LESSTHAN, lit: "<"},
+		{s: `>`, tok: parser.GREATERTHAN, lit: ">"},
+		{s: "=", tok: parser.EQUAL, lit: "="},
+		{s: "!", tok: parser.NOT, lit: "!"},
 	}
 
 	for i, tt := range tests {

@@ -46,6 +46,14 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 		return ASTRISK, string(ch)
 	case ',':
 		return COMMA, string(ch)
+	case '<':
+		return LESSTHAN, string(ch)
+	case '>':
+		return GREATERTHAN, string(ch)
+	case '=':
+		return EQUAL, string(ch)
+	case '!':
+		return NOT, string(ch)
 	}
 
 	return ILLEGAL, string(ch)
@@ -93,6 +101,8 @@ func (s *Scanner) scanIdent() (tok Token, lit string) {
 	switch strings.ToUpper(buf.String()) {
 	case "SELECT":
 		return SELECT, buf.String()
+	case "AND":
+		return AND, buf.String()
 	}
 
 	return IDENT, buf.String()
