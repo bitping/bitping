@@ -12,6 +12,7 @@ func main() {
 	Run(os.Args)
 }
 
+// Run executes the program
 func Run(args []string) {
 	app := cli.NewApp()
 	var version = readVersion()

@@ -15,7 +15,8 @@ type BlockChainRunner interface {
 
 type Block struct {
 	HeaderHash            string        `json:"headerHash"`
-	Network               string        `json:"network"`
+	NetworkName           string        `json:"networkName"`
+	NetworkID             int           `json:"networkId"`
 	BlockNumber           int64         `json:"blockNumber"`
 	BlockHash             string        `json:"blockHash"`
 	BlockParentHash       string        `json:"blockParentHash"`
@@ -37,17 +38,17 @@ type Block struct {
 }
 
 type Transaction struct {
-	BlockHash        string    `json:"blockHash"`
-	BlockNumber      int64     `json:"blockNumber"`
-	Hash             string    `json:"hash"`
-	Nonce            int64     `json:"nonce"`
-	TransactionIndex int64     `json:"transactionIndex"`
-	From             string    `json:"from"`
-	To               string    `json:"to"`
-	Value            int64 `json:"value"`
-	GasPrice         int64 `json:"gasPrice"`
+	BlockHash        string `json:"blockHash"`
+	BlockNumber      int64  `json:"blockNumber"`
+	Hash             string `json:"hash"`
+	Nonce            int64  `json:"nonce"`
+	TransactionIndex int64  `json:"transactionIndex"`
+	From             string `json:"from"`
+	To               string `json:"to"`
+	Value            int64  `json:"value"`
+	GasPrice         int64  `json:"gasPrice"`
 	Gas              uint64 `json:"gas"`
-	Input            string    `json:"input"`
+	Input            string `json:"input"`
 }
 
 type Log struct {

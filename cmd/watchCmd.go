@@ -72,9 +72,17 @@ func StartListening(c *cli.Context) {
 					// fmt.Printf("Running submitted block to worker pool %s\n", dat)
 					jsonString := string(dat[:])
 
+					// SELECT * FROM ethereum transactions WHERE address = "0xdeadbeef" AND gas > 1000000 confirmed;
+					// SELECT * transactions WHERE to = "0xcoffeeshop" WHERE UTXO is complete; -> transactions*n
 					jq := gojsonq.New().JSONString(jsonString).From("transactions").Where("gas", ">", 100000)
-
 					fmt.Printf("%#v\n", jq.Get())
+
+					// fire event
+					// for i, matched := range(jq.Get()) {
+					// 	matchedEndpoint := db.GetEndpoint(i)
+					// 	// build JSON
+					// 	httpClient.POST(matchedEndpoint)
+					// }
 
 				}
 			})

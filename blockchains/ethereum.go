@@ -26,8 +26,9 @@ type EthereumOptions struct {
 
 // TODO: make interface for blockchains
 type EthereumApp struct {
-	Client  *ethclient.Client
-	Options EthereumOptions
+	Client    *ethclient.Client
+	Options   EthereumOptions
+	NetworkId big.Int
 	types.BlockChainRunner
 }
 
@@ -43,6 +44,10 @@ func NewEthClient(opts EthereumOptions) (*EthereumApp, error) {
 		Options: opts,
 	}
 
+	networkId := app.GetNetwork()
+	fmt.Printf("Network id: %v\n", networkId)
+	app.NetworkId = *networkId
+
 	return app, nil
 }
 
@@ -52,8 +57,6 @@ func (app *EthereumApp) Run(
 	errChan chan error,
 ) {
 	fmt.Printf("Running ethereum\n")
-	networkId := app.GetNetwork()
-	fmt.Printf("Network id: %v\n", networkId)
 
 	// test
 	var headsCh = make(chan *types.Header)
@@ -217,7 +220,8 @@ func (app *EthereumApp) GetBlockFromHeader(
 	}
 
 	blockObj := types.Block{
-		Network:               "ethereum",
+		NetworkName:           "ethereum",
+		NetworkID:             app.NetworkId,
 		HeaderHash:            head.Hash().Hex(),
 		BlockHash:             block.HashNoNonce().Hex(),
 		BlockNumber:           block.Number().Int64(),
