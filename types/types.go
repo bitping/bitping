@@ -72,6 +72,7 @@ type Block struct {
 	Hash       string  `json:"hash"`
 	HeaderHash string  `json:"headerHash"`
 	Network    string  `json:"network"`
+	NetworkID  int64   `json:"networkID"`
 	Nonce      string  `json:"nonce"`
 	Number     int64   `json:"number"`
 	Size       float64 `json:"size"`
