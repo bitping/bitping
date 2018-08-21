@@ -224,6 +224,7 @@ func (app *EthereumApp) GetFromHeader(
 		Hash:       block.HashNoNonce().Hex(),
 		HeaderHash: head.Hash().Hex(),
 		Network:    "ethereum",
+		NetworkID:  app.NetworkId.Int64(),
 		Nonce:      fmt.Sprint(block.Nonce()),
 		Number:     block.Number().Int64(),
 		Size:       float64(block.Size()),
