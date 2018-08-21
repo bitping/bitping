@@ -221,7 +221,7 @@ func (app *EthereumApp) GetBlockFromHeader(
 
 	blockObj := types.Block{
 		NetworkName:           "ethereum",
-		NetworkID:             app.NetworkId,
+		NetworkID:             app.NetworkId.Int64(),
 		HeaderHash:            head.Hash().Hex(),
 		BlockHash:             block.HashNoNonce().Hex(),
 		BlockNumber:           block.Number().Int64(),

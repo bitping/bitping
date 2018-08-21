@@ -21,6 +21,14 @@ var queryCmd = cli.Command{
 	},
 }
 
+var insertCmd = cli.Command{
+	Name:  "insert",
+	Usage: "insert a query value",
+	Action: func(c *cli.Context) {
+		fmt.Printf("Insert a watchable value\n")
+	},
+}
+
 // DbCmd is the main database command
 var DbCmd = cli.Command{
 	Name:  "db",
@@ -28,5 +36,6 @@ var DbCmd = cli.Command{
 	Flags: sharedDbFlags,
 	Subcommands: []cli.Command{
 		queryCmd,
+		insertCmd,
 	},
 }

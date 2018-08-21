@@ -16,7 +16,7 @@ type BlockChainRunner interface {
 type Block struct {
 	HeaderHash            string        `json:"headerHash"`
 	NetworkName           string        `json:"networkName"`
-	NetworkID             int           `json:"networkId"`
+	NetworkID             int64         `json:"networkId"`
 	BlockNumber           int64         `json:"blockNumber"`
 	BlockHash             string        `json:"blockHash"`
 	BlockParentHash       string        `json:"blockParentHash"`
