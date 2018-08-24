@@ -56,7 +56,7 @@ func (app *EthereumApp) Run(
 	// transChan chan []types.Transaction,
 	errChan chan error,
 ) {
-	fmt.Printf("Running ethereum\n")
+	fmt.Printf("Running Ethereum\n")
 
 	// test
 	var headsCh = make(chan *types.Header)
@@ -205,22 +205,26 @@ func (app *EthereumApp) GetFromHeader(
 		}
 
 		transaction := types.Transaction{
-			BlockHash:        block.Hash().Hex(),
-			BlockNumber:      block.Number().Int64(),
-			Hash:             tx.Hash().String(),
-			Nonce:            int64(tx.Nonce()),
-			TransactionIndex: int64(i),
-			From:             txFromStr,
-			To:               txToStr,
-			Value:            tx.Value().Int64(),
-			GasPrice:         tx.Cost().Int64(),
-			Gas:              tx.Gas(),
+			BlockHash:   block.Hash().Hex(),
+			BlockNumber: block.Number().Int64(),
+			Hash:        tx.Hash().String(),
+			Nonce:       int64(tx.Nonce()),
+			From:        txFromStr,
+			To:          txToStr,
+			Value:       types.NewBigInt(tx.Value()),
+			Data:        tx.Data(),
+
+			EthereumTransaction: &types.EthereumTransaction{
+				GasPrice:         types.NewBigInt(tx.Cost()),
+				Gas:              tx.Gas(),
+				TransactionIndex: int64(i),
+			},
 		}
 		transactions = append(transactions, transaction)
 	}
 
 	blockObj := types.Block{
-		Difficulty: float64(block.Difficulty().Int64()),
+		Difficulty: types.NewBigInt(block.Difficulty()),
 		Hash:       block.HashNoNonce().Hex(),
 		HeaderHash: head.Hash().Hex(),
 		Network:    "ethereum",
@@ -229,19 +233,21 @@ func (app *EthereumApp) GetFromHeader(
 		Number:     block.Number().Int64(),
 		Size:       float64(block.Size()),
 		ParentHash: block.ParentHash().String(),
+		Time:       block.Time().Int64(),
 
 		EthereumBlock: &types.EthereumBlock{
-			TotalDifficulty:  block.Difficulty().Int64(), // make sense?
+			TotalDifficulty:  types.NewBigInt(block.Difficulty()), // make sense?
 			GasUsed:          block.GasUsed(),
 			GasLimit:         block.GasLimit(),
 			ExtraData:        fmt.Sprint(block.Extra()),
 			Sha3Uncles:       head.UncleHash.String(),
-			Miner:            block.Hash().Hex(),
+			Miner:            block.Coinbase().Hex(),
 			TransactionsRoot: head.TxHash.String(),
 			StateRoot:        head.Root.String(),
 		},
 
-		Transactions: transactions,
+		Transactions:          transactions,
+		SingletonTransactions: transactions,
 	}
 
 	return blockObj, nil
