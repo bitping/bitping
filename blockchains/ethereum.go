@@ -56,11 +56,7 @@ func (app *EthereumApp) Run(
 	// transChan chan []types.Transaction,
 	errChan chan error,
 ) {
-<<<<<<< HEAD
 	fmt.Printf("Running Ethereum\n")
-=======
-	fmt.Printf("Running ethereum\n")
->>>>>>> master
 
 	// test
 	var headsCh = make(chan *types.Header)

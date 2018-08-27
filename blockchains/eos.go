@@ -1,7 +1,7 @@
 package blockchains
 
 import (
-	"fmt"
+	"encoding/hex"
 	"log"
 
 	types "github.com/auser/bitping/types"
@@ -22,7 +22,7 @@ type EosApp struct {
 }
 
 func NewEosClient(opts EosOptions) (*EosApp, error) {
-	fmt.Printf("%#v\n", opts)
+	log.Printf("EOS Opts %v\n", opts)
 	api := eos.New(opts.Node)
 
 	info, err := api.GetInfo()
@@ -44,7 +44,7 @@ func (app *EosApp) Run(
 	// transChan chan []types.Transaction,
 	errCh chan error,
 ) {
-	fmt.Printf("Running EOS\n")
+	log.Printf("Running EOS\n")
 
 	for {
 		info := app.Info
@@ -55,7 +55,8 @@ func (app *EosApp) Run(
 		app.Info = latestInfo
 
 		for blockNum := info.LastIrreversibleBlockNum; blockNum < latestInfo.LastIrreversibleBlockNum; blockNum++ {
-			block, err := app.Client.GetBlockByNum(blockNum)
+			log.Printf("Getting Block: %v", blockNum)
+			block, err := app.Client.GetBlockByNum(blockNum) //11819163
 			if err != nil {
 				log.Fatalf("GetBlockByNum Error: %v", err)
 				errCh <- err
@@ -63,7 +64,7 @@ func (app *EosApp) Run(
 			}
 
 			transactions := make([]types.Transaction, len(block.Transactions))
-			singletonTransactions := make([]types.Transaction, len(block.Transactions))
+			singletonTransactions := make([]types.Transaction, 0)
 			for txNum, tx := range block.Transactions {
 				if tx.Transaction.Packed == nil {
 					continue
@@ -106,23 +107,23 @@ func (app *EosApp) Run(
 
 				cfd := make([]string, len(unpacked.ContextFreeData))
 				for i, cf := range unpacked.ContextFreeData {
-					cfd[i] = string(cf)
+					cfd[i] = hex.EncodeToString(cf)
 				}
 
 				transactions[txNum] = types.Transaction{
-					BlockHash:   string(block.ID),
+					BlockHash:   hex.EncodeToString(block.ID),
 					BlockNumber: int64(block.BlockNum),
-					Hash:        string(tx.Transaction.ID),
+					Hash:        hex.EncodeToString(tx.Transaction.ID),
 					EOSTransactionReceipt: &types.EOSTransactionReceipt{
 						Status:               statusCode,
 						CPUUsageMicroSeconds: uint64(tx.CPUUsageMicroSeconds),
 						NetUsageWords:        uint64(tx.NetUsageWords),
 						TRX: types.EOSTransactionWithID{
-							ID:                    string(tx.Transaction.ID),
+							ID:                    hex.EncodeToString(tx.Transaction.ID),
 							Signatures:            trxSigs,
 							Compression:           trxCmp,
-							PackedTRX:             string(packed.PackedTransaction),
-							PackedContextFreeData: string(packed.PackedContextFreeData),
+							PackedTRX:             hex.EncodeToString(packed.PackedTransaction),
+							PackedContextFreeData: hex.EncodeToString(packed.PackedContextFreeData),
 							ContextFreeData:       cfd,
 							Transaction: types.EOSUnpackedTransaction{
 								Expiration:              unpacked.Expiration.Unix(),
@@ -142,7 +143,7 @@ func (app *EosApp) Run(
 					cfActs[i] = types.EOSAction{
 						Account: string(cfAct.Account),
 						Name:    string(cfAct.Name),
-						HexData: string(cfAct.HexData),
+						HexData: hex.EncodeToString(cfAct.HexData),
 						Data:    cfAct.Data,
 					}
 				}
@@ -152,7 +153,7 @@ func (app *EosApp) Run(
 				for i, ext := range unpacked.Extensions {
 					exts[i] = types.EOSExtension{
 						Type: uint64(ext.Type),
-						Data: string(ext.Data),
+						Data: hex.EncodeToString(ext.Data),
 					}
 				}
 				transactions[txNum].TRX.Transaction.ContextFreeActions = cfActs
@@ -162,7 +163,7 @@ func (app *EosApp) Run(
 					acts[i] = types.EOSAction{
 						Account: string(act.Account),
 						Name:    string(act.Name),
-						HexData: string(act.HexData),
+						HexData: hex.EncodeToString(act.HexData),
 						Data:    act.Data,
 					}
 
@@ -182,6 +183,7 @@ func (app *EosApp) Run(
 							transactions[txNum].Value = types.BigIntFromInt(op.Quantity.Amount)
 							transactions[txNum].Symbol = string(op.Quantity.Symbol.Symbol)
 							transactions[txNum].Precision = uint64(op.Quantity.Precision)
+							transactions[txNum].SingletonIndex = len(singletonTransactions)
 							singletonTransactions = append(singletonTransactions, transactions[txNum])
 						case *token.Create:
 							// Send token to self meaning
@@ -191,6 +193,7 @@ func (app *EosApp) Run(
 							transactions[txNum].Value = types.BigIntFromInt(op.MaximumSupply.Amount)
 							transactions[txNum].Symbol = string(op.MaximumSupply.Symbol.Symbol)
 							transactions[txNum].Precision = uint64(op.MaximumSupply.Precision)
+							transactions[txNum].SingletonIndex = len(singletonTransactions)
 							singletonTransactions = append(singletonTransactions, transactions[txNum])
 						case *token.Issue:
 							log.Printf("Created By: %s, Quantity: %s", op.To, op.Quantity)
@@ -199,11 +202,11 @@ func (app *EosApp) Run(
 							transactions[txNum].Value = types.BigIntFromInt(op.Quantity.Amount)
 							transactions[txNum].Symbol = string(op.Quantity.Symbol.Symbol)
 							transactions[txNum].Precision = uint64(op.Quantity.Precision)
+							transactions[txNum].SingletonIndex = len(singletonTransactions)
 							singletonTransactions = append(singletonTransactions, transactions[txNum])
 						}
-
 					} else {
-						log.Println("no action.data")
+						log.Println("No Action.Data")
 					}
 				}
 
@@ -211,21 +214,21 @@ func (app *EosApp) Run(
 			}
 
 			blockObj := types.Block{
-				Hash:       string(block.ID),
-				HeaderHash: string(block.ID),
+				Hash:       hex.EncodeToString(block.ID),
+				HeaderHash: hex.EncodeToString(block.ID),
 				Network:    "eos",
 				Number:     int64(block.BlockNum),
-				ParentHash: string(block.Previous),
+				ParentHash: hex.EncodeToString(block.Previous),
 				Time:       block.Timestamp.Unix(),
 
 				EOSBlock: &types.EOSBlock{
 					Producer:              string(block.Producer),
 					Confirmed:             uint64(block.Confirmed),
-					TransactionMerkleRoot: string(block.TransactionMRoot),
-					ActionMerkleRoot:      string(block.ActionMRoot),
+					TransactionMerkleRoot: hex.EncodeToString(block.TransactionMRoot),
+					ActionMerkleRoot:      hex.EncodeToString(block.ActionMRoot),
 					ProducerSignature:     block.ProducerSignature.String(),
 					RefBlockPrefix:        uint64(block.RefBlockPrefix),
-					ChainID:               string(info.ChainID),
+					ChainID:               hex.EncodeToString(info.ChainID),
 				},
 
 				Transactions:          transactions,

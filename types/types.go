@@ -46,7 +46,7 @@ func BigIntFromString(s string) (*BigInt, bool) {
 
 func (i BigInt) MarshalJSON() ([]byte, error) {
 	i2 := big.Int(i)
-	return []byte(fmt.Sprintf(`"%s"`, i2.String())), nil
+	return []byte(fmt.Sprintf(`%s`, i2.String())), nil
 }
 
 // {
@@ -152,8 +152,6 @@ type EthereumBlock struct {
 }
 
 type Block struct {
-<<<<<<< HEAD
-	*BitcoinBlock
 	*EOSBlock
 	*EthereumBlock
 
@@ -243,29 +241,6 @@ type EOSAction struct {
 	Authorization []EOSPermissionLevel `json:"authorization"`
 	HexData       string               `json:"hexData"`
 	Data          interface{}          `json:"data"`
-=======
-	HeaderHash            string        `json:"headerHash"`
-	NetworkName           string        `json:"networkName"`
-	NetworkID             int64         `json:"networkId"`
-	BlockNumber           int64         `json:"blockNumber"`
-	BlockHash             string        `json:"blockHash"`
-	BlockParentHash       string        `json:"blockParentHash"`
-	BlockNonce            string        `json:"blockNonce"`
-	BlockSha3Uncles       string        `json:"blockSha3Uncles"`
-	BlockLogsBloom        string        `json:"blockLogsBloom"`
-	BlockTransactionsRoot string        `json:"blockTransactionsRoot"`
-	BlockStateRoot        string        `json:"blockStateRoot"`
-	BlockMiner            string        `json:"blockMiner"`
-	BlockDifficulty       int64         `json:"blockDifficulty"`
-	BlockTotalDifficulty  int64         `json:"blockTotalDifficulty"`
-	BlockExtraData        string        `json:"blockExtraData"`
-	BlockSize             float64       `json:"blockSize"`
-	BlockGasLimit         uint64        `json:"blockGasLimit"`
-	BlockGasUsed          uint64        `json:"blockGasUsed"`
-	BlockTimeStamp        int64         `json:"blockTimestamp"`
-	BlockUncles           []string      `json:"blockUncles"`
-	Transactions          []Transaction `json:"transactions"`
->>>>>>> master
 }
 
 type EOSUnpackedTransaction struct {
@@ -334,8 +309,8 @@ type Transaction struct {
 	Data        []byte  `json:"data"`
 
 	// Is this a tx that's split form
-	IsSingleton    bool   `json:"isSplit"`
-	SingletonIndex uint64 `json:"singletonIndex"`
+	IsSingleton    bool `json:"isSplit"`
+	SingletonIndex int  `json:"singletonIndex"`
 }
 
 type Log struct {

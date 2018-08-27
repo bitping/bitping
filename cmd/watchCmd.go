@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 
 	b "github.com/auser/bitping/blockchains"
@@ -12,20 +11,21 @@ import (
 	"github.com/thedevsaddam/gojsonq"
 )
 
-var sharedFlags = append([]cli.Flag{}, cli.StringFlag{
-	Name:   "eth",
-	Usage:  "ethereum address",
-	EnvVar: "ETH_PATH",
-},
+var sharedFlags = append([]cli.Flag{},
+	cli.StringFlag{
+		Name:   "eth",
+		Usage:  "ethereum address",
+		EnvVar: "ETH_PATH",
+	},
 	cli.StringFlag{
 		Name:  "eos",
 		Usage: "eos address",
 	},
-	cli.StringFlag{
-		Name:  "eos-p2p",
-		Usage: "eos p2p address",
-		Value: "peering.mainnet.eoscanada.com:9876",
-	},
+	// cli.StringFlag{
+	// 	Name:  "eos-p2p",
+	// 	Usage: "eos p2p address",
+	// 	Value: "peering.mainnet.eoscanada.com:9876",
+	// },
 	cli.Int64Flag{
 		Name:  "eos-version",
 		Usage: "eos network version",
@@ -44,7 +44,7 @@ func StartListening(c *cli.Context) {
 
 	var ethAddr = c.String("eth")
 	var eosAddr = c.String("eos")
-	var eosp2pAddr = c.String("eos-p2p")
+	// var eosp2pAddr = c.String("eos-p2p")
 	var eosNetworkVersion = c.Int64("eos-version")
 
 	var workerPool = work.New(128)
@@ -58,7 +58,7 @@ func StartListening(c *cli.Context) {
 		runEthereum(ethAddr, in, errCh)
 	}
 	if eosAddr != "" {
-		runEos(eosAddr, eosp2pAddr, eosNetworkVersion, in, errCh)
+		runEos(eosAddr, eosNetworkVersion, in, errCh)
 	}
 	for {
 		select {
@@ -67,7 +67,7 @@ func StartListening(c *cli.Context) {
 			workerPool.Submit(func() {
 				dat, err := json.Marshal(block)
 				if err != nil {
-					fmt.Printf("Error marshaling block: %s\n", err.Error())
+					log.Printf("Error marshaling block: %s\n", err.Error())
 					return
 				} else {
 					// fmt.Printf("Running submitted block to worker pool %s\n", dat)
@@ -76,8 +76,9 @@ func StartListening(c *cli.Context) {
 
 					// SELECT * FROM ethereum transactions WHERE address = "0xdeadbeef" AND gas > 1000000 confirmed;
 					// SELECT * transactions WHERE to = "0xcoffeeshop" WHERE UTXO is complete; -> transactions*n
-					jq := gojsonq.New().JSONString(jsonString).From("transactions").Where("gas", ">", 100000)
-					fmt.Printf("%#v\n", jq.Get())
+					// jq := gojsonq.New().JSONString(jsonString).From("transactions").Where("gas", ">", 100000)
+					jq := gojsonq.New().JSONString(jsonString).From("singletonTransactions").Where("value", ">", 0)
+					log.Printf("JQ %#v\n", jq.Get())
 
 					// fire event
 					// for i, matched := range(jq.Get()) {
@@ -89,13 +90,13 @@ func StartListening(c *cli.Context) {
 				}
 			})
 		case err := <-errCh:
-			fmt.Printf("Error listening: %#v\n", err)
+			log.Printf("Error listening: %#v\n", err)
 			break
 		}
 	}
 	// END SETUP
 
-	fmt.Printf("Shutdown network\n")
+	log.Printf("Shutdown network\n")
 }
 
 func runEthereum(addr string, in chan types.Block, errCh chan error) {
@@ -104,23 +105,20 @@ func runEthereum(addr string, in chan types.Block, errCh chan error) {
 	}
 	ethClient, err := b.NewEthClient(opts)
 	if err != nil {
-		log.Fatal("Error: %s\n", err.Error())
+		log.Fatalf("Error: %s\n", err.Error())
 	}
 	go ethClient.Run(in, errCh)
 }
 
-func runEos(addr string, p2pAddr string, eosNetworkVersion int64, in chan types.Block, errCh chan error) {
+func runEos(addr string, eosNetworkVersion int64, in chan types.Block, errCh chan error) {
 	opts := b.EosOptions{
-		P2PAddr:        p2pAddr,
 		Node:           addr,
 		NetworkVersion: eosNetworkVersion,
 	}
 
-	fmt.Printf("%#v\n", opts)
-
 	eosClient, err := b.NewEosClient(opts)
 	if err != nil {
-		log.Fatal("Error loading Eos client: %s\n", err.Error())
+		log.Fatalf("Error loading Eos client: %s\n", err.Error())
 	}
 	go eosClient.Run(in, errCh)
 }
