@@ -4,7 +4,8 @@ import (
 	"encoding/hex"
 	"log"
 
-	types "github.com/auser/bitping/types"
+	"github.com/auser/bitping/types"
+	"github.com/codegangsta/cli"
 	"github.com/eoscanada/eos-go"
 	"github.com/eoscanada/eos-go/token"
 )
@@ -39,7 +40,54 @@ func NewEosClient(opts EosOptions) (*EosApp, error) {
 	return app, nil
 }
 
-func (app *EosApp) Run(
+func (app EosApp) AddCLIFlags(fs []cli.Flag) []cli.Flag {
+	return append(fs,
+		cli.StringFlag{
+			Name:  "eos",
+			Usage: "eos address",
+		},
+		// cli.StringFlag{
+		// 	Name:  "eos-p2p",
+		// 	Usage: "eos p2p address",
+		// 	Value: "peering.mainnet.eoscanada.com:9876",
+		// },
+		cli.Int64Flag{
+			Name:  "eos-version",
+			Usage: "eos network version",
+			Value: int64(1206),
+		},
+	)
+}
+
+func (app EosApp) Name() string {
+	return "EOS Watcher"
+}
+
+func (app EosApp) IsConfigured(c *cli.Context) bool {
+	return c.String("eos") != ""
+}
+
+func (app *EosApp) Configure(c *cli.Context) error {
+	nodePath := c.String("eos")
+	api := eos.New(nodePath)
+
+	info, err := api.GetInfo()
+	if err != nil {
+		log.Fatalf("GetInfo Error, %v", err)
+		return err
+	}
+
+	app.Client = api
+	app.Info = info
+	app.Options = EosOptions{
+		Node:           nodePath,
+		NetworkVersion: c.Int64("eos-version"),
+	}
+
+	return nil
+}
+
+func (app *EosApp) Watch(
 	blockCh chan types.Block,
 	// transChan chan []types.Transaction,
 	errCh chan error,

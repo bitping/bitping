@@ -4,65 +4,67 @@ import (
 	"encoding/json"
 	"log"
 
-	b "github.com/auser/bitping/blockchains"
+	"github.com/auser/bitping/blockchains"
 	"github.com/auser/bitping/types"
 	"github.com/auser/bitping/work"
 	"github.com/codegangsta/cli"
 	"github.com/thedevsaddam/gojsonq"
+
+	. "github.com/auser/bitping/iface"
 )
 
-var sharedFlags = append([]cli.Flag{},
-	cli.StringFlag{
-		Name:   "eth",
-		Usage:  "ethereum address",
-		EnvVar: "ETH_PATH",
-	},
-	cli.StringFlag{
-		Name:  "eos",
-		Usage: "eos address",
-	},
-	// cli.StringFlag{
-	// 	Name:  "eos-p2p",
-	// 	Usage: "eos p2p address",
-	// 	Value: "peering.mainnet.eoscanada.com:9876",
-	// },
-	cli.Int64Flag{
-		Name:  "eos-version",
-		Usage: "eos network version",
-		Value: int64(1206),
-	},
-)
+var watchables []Watchable
+var WatchCmd cli.Command
 
-var WatchCmd = cli.Command{
-	Name:   "watch",
-	Usage:  "Run watch server",
-	Flags:  append([]cli.Flag{}, sharedFlags...),
-	Action: StartListening,
+func init() {
+	watchables = []Watchable{
+		&blockchains.EthereumApp{},
+		&blockchains.EosApp{},
+	}
+
+	fs := []cli.Flag{}
+
+	for _, w := range watchables {
+		fs = w.AddCLIFlags(fs)
+	}
+
+	WatchCmd = cli.Command{
+		Name:   "watch",
+		Usage:  "Run watch server",
+		Flags:  fs,
+		Action: StartListening,
+	}
 }
 
 func StartListening(c *cli.Context) {
-
-	var ethAddr = c.String("eth")
-	var eosAddr = c.String("eos")
-	// var eosp2pAddr = c.String("eos-p2p")
-	var eosNetworkVersion = c.Int64("eos-version")
-
 	var workerPool = work.New(128)
 	defer workerPool.Stop()
-	var in = make(chan types.Block)
+	var blockCh = make(chan types.Block)
 	var errCh = make(chan error)
-	// var done = make(chan struct{})
+
+	// CONFIGURE WATCHABLES
+	for _, w := range watchables {
+		if w.IsConfigured(c) {
+			log.Printf("Configuring %v", w.Name())
+		} else {
+			log.Printf("Not Starting %v", w.Name())
+			continue
+		}
+
+		if err := w.Configure(c); err != nil {
+			log.Printf("Failed to Start %v: %v", w.Name(), err)
+			continue
+		}
+
+		log.Printf("Starting %v", w.Name())
+
+		go w.Watch(blockCh, errCh)
+	}
 
 	// SETUP LISTENING PROCESS
-	if ethAddr != "" {
-		runEthereum(ethAddr, in, errCh)
-	}
-	if eosAddr != "" {
-		runEos(eosAddr, eosNetworkVersion, in, errCh)
-	}
 	for {
 		select {
-		case block := <-in:
+		case block := <-blockCh:
 			// Handle querying here
 			workerPool.Submit(func() {
 				dat, err := json.Marshal(block)
@@ -94,31 +96,4 @@ func StartListening(c *cli.Context) {
 			break
 		}
 	}
-	// END SETUP
-
-	log.Printf("Shutdown network\n")
-}
-
-func runEthereum(addr string, in chan types.Block, errCh chan error) {
-	opts := b.EthereumOptions{
-		Node: addr,
-	}
-	ethClient, err := b.NewEthClient(opts)
-	if err != nil {
-		log.Fatalf("Error: %s\n", err.Error())
-	}
-	go ethClient.Run(in, errCh)
-}
-
-func runEos(addr string, eosNetworkVersion int64, in chan types.Block, errCh chan error) {
-	opts := b.EosOptions{
-		Node:           addr,
-		NetworkVersion: eosNetworkVersion,
-	}
-
-	eosClient, err := b.NewEosClient(opts)
-	if err != nil {
-		log.Fatalf("Error loading Eos client: %s\n", err.Error())
-	}
-	go eosClient.Run(in, errCh)
 }

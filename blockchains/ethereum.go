@@ -8,6 +8,7 @@ import (
 	"time"
 
 	types "github.com/auser/bitping/types"
+	"github.com/codegangsta/cli"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	backoff "github.com/jpillora/backoff"
@@ -51,7 +52,42 @@ func NewEthClient(opts EthereumOptions) (*EthereumApp, error) {
 	return app, nil
 }
 
-func (app *EthereumApp) Run(
+func (app EthereumApp) Name() string {
+	return "Ethereum Watcher"
+}
+
+func (app EthereumApp) AddCLIFlags(fs []cli.Flag) []cli.Flag {
+	return append(fs, cli.StringFlag{
+		Name:   "eth",
+		Usage:  "ethereum address",
+		EnvVar: "ETH_PATH",
+	})
+}
+
+func (app EthereumApp) IsConfigured(c *cli.Context) bool {
+	return c.String("eth") != ""
+}
+
+func (app *EthereumApp) Configure(c *cli.Context) error {
+	nodePath := c.String("eth")
+	client, err := ethclient.Dial(nodePath)
+	if err != nil {
+		return err
+	}
+
+	app.Client = client
+	app.Options = EthereumOptions{
+		Node: nodePath,
+	}
+
+	networkId := app.GetNetwork()
+	fmt.Printf("Network id: %v\n", networkId)
+	app.NetworkId = *networkId
+
+	return nil
+}
+
+func (app *EthereumApp) Watch(
 	blockChan chan types.Block,
 	// transChan chan []types.Transaction,
 	errChan chan error,
