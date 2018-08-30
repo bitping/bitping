@@ -2,7 +2,12 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
+
+	contracts "github.com/auser/bitping/contracts"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/auser/bitping/blockchains"
 	"github.com/auser/bitping/types"
@@ -15,6 +20,7 @@ import (
 
 var watchables []Watchable
 var WatchCmd cli.Command
+var contract *contracts.USDToken
 
 func init() {
 	watchables = []Watchable{
@@ -22,7 +28,11 @@ func init() {
 		&blockchains.EosApp{},
 	}
 
-	fs := []cli.Flag{}
+	fs := append([]cli.Flag{},
+		cli.StringFlag{
+			Name: "contractAddress",
+		},
+	)
 
 	for _, w := range watchables {
 		fs = w.AddCLIFlags(fs)
@@ -37,6 +47,22 @@ func init() {
 }
 
 func StartListening(c *cli.Context) {
+	// Open the contract
+	contractAddrStr := c.String("contractAddress")
+	ethClient := watchables[0].(*blockchains.EthereumApp).Client
+
+	if contractAddrStr != "" {
+		contractAddr := common.HexToAddress(contractAddrStr)
+		contract, err := contracts.NewUSDToken(contractAddr, ethClient)
+
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("contract is loaded")
+		_ = contract
+	}
+
 	var workerPool = work.New(128)
 	defer workerPool.Stop()
 	var blockCh = make(chan types.Block)
