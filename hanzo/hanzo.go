@@ -1,4 +1,4 @@
-package hanzogo
+package hanzo
 
 import (
 	"bytes"
