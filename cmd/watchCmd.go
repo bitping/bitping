@@ -78,9 +78,12 @@ func StartListening(c *cli.Context) {
 
 					// SELECT * FROM ethereum transactions WHERE address = "0xdeadbeef" AND gas > 1000000 confirmed;
 					// SELECT * transactions WHERE to = "0xcoffeeshop" WHERE UTXO is complete; -> transactions*n
-					// jq := gojsonq.New().JSONString(jsonString).From("transactions").Where("gas", ">", 100000)
-					jq := gojsonq.New().JSONString(jsonString).From("singletonTransactions").Where("value", ">", 0)
-					log.Printf("JQ %#v\n", jq.Get())
+					jq := gojsonq.New().JSONString(jsonString).From("transactions").Where("from", "=", "0xf8f59f0269c4f6d7b5c5ab98d70180eaa0c7507e").OrWhere("to", "=", "0xf8f59f0269c4f6d7b5c5ab98d70180eaa0c7507e")
+					// jq := gojsonq.New().JSONString(jsonString).From("singletonTransactions").Where("value", ">", 0)
+					// log.Printf("%#v\n", jsonString)
+					if jq.Count() > 0 {
+						log.Printf("An event occurred on the address")
+					}
 
 					// fire event
 					// for i, matched := range(jq.Get()) {
