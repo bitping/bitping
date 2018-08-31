@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"strings"
 	"time"
 
 	types "github.com/auser/bitping/types"
@@ -218,7 +219,10 @@ func (app *EthereumApp) GetFromHeader(
 ) (types.Block, error) {
 	// ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 
+	head.Number = new(big.Int).SetInt64(3948621)
+
 	// right now, this is blocking... do we want it to block?
+	log.Printf("ETH Getting Block: %v", head.Number)
 	block, err := app.getByNumWithBackoff(head.Number)
 	if err != nil {
 		return types.Block{}, err
@@ -245,8 +249,8 @@ func (app *EthereumApp) GetFromHeader(
 			BlockNumber: block.Number().Int64(),
 			Hash:        tx.Hash().String(),
 			Nonce:       int64(tx.Nonce()),
-			From:        txFromStr,
-			To:          txToStr,
+			From:        strings.ToLower(txFromStr),
+			To:          strings.ToLower(txToStr),
 			Value:       types.NewBigInt(tx.Value()),
 			Data:        tx.Data(),
 

@@ -103,7 +103,7 @@ func (app *EosApp) Watch(
 		app.Info = latestInfo
 
 		for blockNum := info.LastIrreversibleBlockNum; blockNum < latestInfo.LastIrreversibleBlockNum; blockNum++ {
-			log.Printf("Getting Block: %v", blockNum)
+			log.Printf("EOS Getting Block: %v", blockNum)
 			block, err := app.Client.GetBlockByNum(blockNum) //11819163
 			if err != nil {
 				log.Fatalf("GetBlockByNum Error: %v", err)

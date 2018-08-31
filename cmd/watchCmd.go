@@ -108,6 +108,7 @@ func StartListening(c *cli.Context) {
 					// jq := gojsonq.New().JSONString(jsonString).From("singletonTransactions").Where("value", ">", 0)
 					// log.Printf("%#v\n", jsonString)
 					if jq.Count() > 0 {
+						fmt.Printf("%s\n", jsonString)
 						log.Printf("An event occurred on the address")
 					}
 
