@@ -219,7 +219,7 @@ func (app *EthereumApp) GetFromHeader(
 ) (types.Block, error) {
 	// ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 
-	head.Number = new(big.Int).SetInt64(3948621)
+	// head.Number = new(big.Int).SetInt64(3948621)
 
 	// right now, this is blocking... do we want it to block?
 	log.Printf("ETH Getting Block: %v", head.Number)
