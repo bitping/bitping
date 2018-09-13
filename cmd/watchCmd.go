@@ -46,6 +46,7 @@ func init() {
 	}
 }
 
+// StartListening starts the watching of blockchains
 func StartListening(c *cli.Context) {
 	// Open the contract
 	contractAddrStr := c.String("contractAddress")
