@@ -60,6 +60,7 @@ func init() {
 
 // StartListening starts the watching of blockchains
 func StartListening(c *cli.Context) {
+	// au := aurora.NewAurora(!c.GlobalBool("nocolor"))
 	// Open the contract
 	contractAddrStr := c.String("contractAddress")
 	ethClient := watchables[0].(*blockchains.EthereumApp).Client

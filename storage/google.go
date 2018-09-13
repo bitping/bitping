@@ -92,6 +92,5 @@ func (s *GoogleStore) Push(data interface{}) bool {
 	}
 
 	_, err = topic.Publish(ctx, &pubsub.Message{Data: b}).Get(ctx)
-	log.Printf("Published updated to pubsub %v", err)
 	return err == nil
 }
