@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	storage "github.com/auser/bitping/storage"
+
 	contracts "github.com/auser/bitping/contracts"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -13,12 +15,14 @@ import (
 	"github.com/auser/bitping/types"
 	"github.com/auser/bitping/work"
 	"github.com/codegangsta/cli"
-	"github.com/thedevsaddam/gojsonq"
 
 	. "github.com/auser/bitping/iface"
 )
 
 var watchables []Watchable
+var storages []storage.Storage
+
+// WatchCmd is the main command
 var WatchCmd cli.Command
 var contract *contracts.USDToken
 
@@ -28,11 +32,19 @@ func init() {
 		&blockchains.EosApp{},
 	}
 
+	storages = []storage.Storage{
+		&storage.GoogleStore{},
+	}
+
 	fs := append([]cli.Flag{},
 		cli.StringFlag{
 			Name: "contractAddress",
 		},
 	)
+
+	for _, store := range storages {
+		fs = store.AddCLIFlags(fs)
+	}
 
 	for _, w := range watchables {
 		fs = w.AddCLIFlags(fs)
@@ -69,6 +81,24 @@ func StartListening(c *cli.Context) {
 	var blockCh = make(chan types.Block)
 	var errCh = make(chan error)
 
+	var activeStorages = []storage.Storage{}
+
+	// CONFIGURE STORAGE
+	for _, s := range storages {
+		if s.IsConfigured(c) {
+			log.Printf("Configuring storage %v", s.Name())
+		} else {
+			log.Printf("Not configuring storage %v", s.Name())
+			continue
+		}
+
+		if err := s.Configure(c); err != nil {
+			log.Printf("Failed to configure %v: %v", s.Name(), err)
+			continue
+		}
+		activeStorages = append(activeStorages, s)
+	}
+
 	// CONFIGURE WATCHABLES
 	for _, w := range watchables {
 		if w.IsConfigured(c) {
@@ -103,15 +133,19 @@ func StartListening(c *cli.Context) {
 					jsonString := string(dat[:])
 					// fmt.Printf("%s\n", jsonString)
 
+					for _, s := range activeStorages {
+						s.Push(jsonString)
+					}
+
 					// SELECT * FROM ethereum transactions WHERE address = "0xdeadbeef" AND gas > 1000000 confirmed;
 					// SELECT * transactions WHERE to = "0xcoffeeshop" WHERE UTXO is complete; -> transactions*n
-					jq := gojsonq.New().JSONString(jsonString).From("transactions").Where("from", "=", "0xf8f59f0269c4f6d7b5c5ab98d70180eaa0c7507e").OrWhere("to", "=", "0xf8f59f0269c4f6d7b5c5ab98d70180eaa0c7507e")
+					// jq := gojsonq.New().JSONString(jsonString).From("transactions").Where("from", "=", "0xf8f59f0269c4f6d7b5c5ab98d70180eaa0c7507e").OrWhere("to", "=", "0xf8f59f0269c4f6d7b5c5ab98d70180eaa0c7507e")
 					// jq := gojsonq.New().JSONString(jsonString).From("singletonTransactions").Where("value", ">", 0)
 					// log.Printf("%#v\n", jsonString)
-					if jq.Count() > 0 {
-						fmt.Printf("%s\n", jsonString)
-						log.Printf("An event occurred on the address")
-					}
+					// if jq.Count() > 0 {
+					// 	fmt.Printf("%s\n", jsonString)
+					// 	log.Printf("An event occurred on the address")
+					// }
 
 					// fire event
 					// for i, matched := range(jq.Get()) {
