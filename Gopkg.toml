@@ -35,7 +35,8 @@
 
 [[constraint]]
   name = "github.com/eoscanada/eos-go"
-  version = "3.0.0"
+  branch = "master"
+  # version = "3.0.0"
 
 [[constraint]]
   name = "github.com/ethereum/go-ethereum"
@@ -57,9 +58,9 @@
   name = "github.com/onsi/gomega"
   version = "1.4.1"
 
-[[constraint]]
-  name = "github.com/thedevsaddam/gojsonq"
-  version = "1.7.0"
+# [[constraint]]
+#   name = "github.com/thedevsaddam/gojsonq"
+#   version = "1.7.0"
 
 [[constraint]]
   name = "github.com/tidwall/buntdb"
