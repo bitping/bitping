@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httputil"
-	"time"
 )
 
 type Client struct {
@@ -18,18 +18,11 @@ type Client struct {
 	ctx    context.Context
 }
 
-func New(c context.Context, apiKey string) *Client {
-	c, _ = context.WithTimeout(c, time.Second*30)
-	client := urlfetch.Client(c)
-	client.Transport = &http.Transport{
-		Context: ctx,
-	}
-
+func New(apiKey string, client *http.Client) *Client {
 	return &Client{
 		ApiKey:   apiKey,
 		Endpoint: "https://api.hanzo.io",
 		client:   client,
-		ctx:      c,
 	}
 }
 
@@ -38,7 +31,12 @@ func (c *Client) Request(method, url string, body interface{}, dst interface{}) 
 
 	// Encode body
 	if body != nil {
-		data = bytes.NewBuffer(json.EncodeBytes(body))
+		if json, err := json.Marshal(body); err != nil {
+			log.Printf("Failed to marshal request body: %v", err)
+			return nil, err
+		} else {
+			data = bytes.NewBuffer(json)
+		}
 	} else {
 		data = bytes.NewBufferString("")
 	}
@@ -46,7 +44,7 @@ func (c *Client) Request(method, url string, body interface{}, dst interface{}) 
 	// Create request
 	req, err := http.NewRequest(method, c.Endpoint+url, data)
 	if err != nil {
-		fmt.Errorf("Failed to create hanzo request: %v", err)
+		log.Fatalf("Failed to create hanzo request: %v", err)
 		return nil, err
 	}
 
@@ -58,22 +56,28 @@ func (c *Client) Request(method, url string, body interface{}, dst interface{}) 
 	r, err := c.client.Do(req)
 
 	dump, _ := httputil.DumpRequest(req, true)
-	log.Warn("hanzo request:\n%s", dump, c.ctx)
+	log.Printf("hanzo request:\n%s", dump)
 
 	// Request failed
 	if err != nil {
-		log.Error("hanzo request failed: %v", err, c.ctx)
+		log.Printf("hanzo request failed: %v", err)
 		return r, err
 	}
 
 	dump, _ = httputil.DumpResponse(r, true)
-	log.Warn("hanzo response:\n%s", dump, c.ctx)
+	log.Printf("hanzo response:\n%s", dump)
 
 	defer r.Body.Close()
 
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Failed to convert io.ReaderCloser: %v", err)
+		return nil, err
+	}
+
 	// Decode response wrapper
-	if err := json.Decode(r.Body, dst); err != nil {
-		log.Warn("Failed to decode response:%v", err, c.ctx)
+	if err := json.Unmarshal(body, dst); err != nil {
+		log.Printf("Failed to decode response: %v", err)
 		return nil, err
 	}
 
