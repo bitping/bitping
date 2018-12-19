@@ -69,14 +69,14 @@ func (c *Client) Request(method, url string, body interface{}, dst interface{}) 
 
 	defer r.Body.Close()
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err = ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("Failed to convert io.ReaderCloser: %v", err)
 		return nil, err
 	}
 
 	// Decode response wrapper
-	if err := json.Unmarshal(body, dst); err != nil {
+	if err = json.Unmarshal(body, dst); err != nil {
 		log.Printf("Failed to decode response: %v", err)
 		return nil, err
 	}

@@ -5,8 +5,8 @@ type Step interface {
 }
 
 type Stage interface {
-	AddChain(blockchain Blockchain)
-	RemoveChain(blockchain Blockchain)
+	AddChain(blockchain BlockchainListener)
+	RemoveChain(blockchain BlockchainListener)
 	AddStep(step Step)
 	RemoveStep(step Step)
 	AddStage(stage ...Stage)

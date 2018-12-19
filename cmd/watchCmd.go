@@ -19,7 +19,7 @@ import (
 	. "github.com/auser/bitping/iface"
 )
 
-var watchables []Watchable
+var watchers []Watcher
 var storages []storage.Storage
 
 // WatchCmd is the main command
@@ -27,7 +27,7 @@ var WatchCmd cli.Command
 var contract *contracts.USDToken
 
 func init() {
-	watchables = []Watchable{
+	watchers = []Watcher{
 		&blockchains.EthereumApp{},
 		&blockchains.EosApp{},
 	}
@@ -46,7 +46,7 @@ func init() {
 		fs = store.AddCLIFlags(fs)
 	}
 
-	for _, w := range watchables {
+	for _, w := range watchers {
 		fs = w.AddCLIFlags(fs)
 	}
 
@@ -63,7 +63,7 @@ func StartListening(c *cli.Context) {
 	// au := aurora.NewAurora(!c.GlobalBool("nocolor"))
 	// Open the contract
 	contractAddrStr := c.String("contractAddress")
-	ethClient := watchables[0].(*blockchains.EthereumApp).Client
+	ethClient := watchers[0].(*blockchains.EthereumApp).Client
 
 	if contractAddrStr != "" {
 		contractAddr := common.HexToAddress(contractAddrStr)
@@ -101,7 +101,7 @@ func StartListening(c *cli.Context) {
 	}
 
 	// CONFIGURE WATCHABLES
-	for _, w := range watchables {
+	for _, w := range watchers {
 		if w.IsConfigured(c) {
 			log.Printf("Configuring %v", w.Name())
 		} else {

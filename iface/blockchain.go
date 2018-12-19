@@ -4,15 +4,15 @@ import (
 	"github.com/auser/bitping/types"
 )
 
-type Block interface {
+type BlockListener interface {
 	Listen(ch chan types.Block, err chan error)
 }
 
-type Transaction interface {
+type TransactionListener interface {
 	Listen(ch chan types.Transaction, err chan error)
 }
 
-type Blockchain interface {
-	Block() Block
-	Transaction() Transaction
+type BlockchainListener interface {
+	Block() BlockListener
+	Transaction() TransactionListener
 }

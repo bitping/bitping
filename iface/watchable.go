@@ -11,7 +11,7 @@ type Configurable interface {
 	Configure(c *cli.Context) error
 }
 
-type Watchable interface {
+type Watcher interface {
 	Configurable
 
 	Name() string
