@@ -11,7 +11,6 @@ import (
 
 // GoogleStore is a struct for handling storing on Google hardware
 type GoogleStore struct {
-	Storage
 	PubsubClient *pubsub.Client
 	TopicID      string
 }

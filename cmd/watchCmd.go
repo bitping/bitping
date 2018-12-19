@@ -20,7 +20,7 @@ import (
 )
 
 var watchers []Watcher
-var storages []storage.Storage
+var storages []Storer
 
 // WatchCmd is the main command
 var WatchCmd cli.Command
@@ -32,7 +32,7 @@ func init() {
 		&blockchains.EosApp{},
 	}
 
-	storages = []storage.Storage{
+	storages = []Storer{
 		&storage.GoogleStore{},
 	}
 
@@ -82,7 +82,7 @@ func StartListening(c *cli.Context) {
 	var blockCh = make(chan types.Block)
 	var errCh = make(chan error)
 
-	var activeStorages = []storage.Storage{}
+	var activeStorages = []Storer{}
 
 	// CONFIGURE STORAGE
 	for _, s := range storages {
