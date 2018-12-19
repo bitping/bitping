@@ -4,3 +4,4 @@ database/*.db
 .key.json
 ethereum/
 vendor
+secrets/
