@@ -113,26 +113,6 @@ func (app *EosApp) Watch(
 
 			log.Printf("block: %v", block)
 
-			accountName := info.HeadBlockProducer
-
-			// eosTx, err := app.Client.GetTransactions(accountName)
-			// if err != nil {
-			// 	log.Fatalf("Getting transaction error for account %v: %v", accountName, err)
-			// 	errCh <- err
-			// 	continue
-			// }
-
-			// params := eos.GetActionsRequest{
-			// 	AccountName: accountName,
-			// }
-
-			// eosActions, err := app.Client.GetActions(params)
-			// if err != nil {
-			// 	log.Fatalf("Getting actions error: %v", err)
-			// 	errCh <- err
-			// 	continue
-			// }
-
 			transactions := make([]types.Transaction, len(block.Transactions))
 			singletonTransactions := make([]types.Transaction, 0)
 			for txNum, txReceipt := range block.Transactions {
