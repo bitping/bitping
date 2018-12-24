@@ -169,7 +169,7 @@ func (app *EosApp) Watch(
 					cfd[i] = hex.EncodeToString(cf)
 				}
 
-				cfActs := make([]types.EOSAction, len(tx.Actions))
+				cfActs := make([]types.EOSAction, len(tx.ContextFreeActions))
 				for i, cfAct := range tx.ContextFreeActions {
 					cfActs[i] = types.EOSAction{
 						Account: string(cfAct.Account),
