@@ -119,9 +119,10 @@ func (app *EosApp) Watch(
 			transactions := make([]types.Transaction, len(block.Transactions))
 			singletonTransactions := make([]types.Transaction, 0)
 			for txNum, txReceipt := range block.Transactions {
-				// packed := tx.Receipt.PackedTransaction
+				log.Printf("tx receipt: %v", txReceipt)
 
-				// if tx.Transaction == nil {
+				// if txReceipt.Transaction == nil {
+				// 	log.Printf("Transaction Receipt has no Transaction")
 				// 	continue
 				// }
 
@@ -144,6 +145,8 @@ func (app *EosApp) Watch(
 					statusCode = "hard_fail"
 				case 3:
 					statusCode = "delayed"
+				case 4:
+					statusCode = "expired"
 				case 255:
 					statusCode = "unknown"
 				}
@@ -191,15 +194,14 @@ func (app *EosApp) Watch(
 					EOSTransactionReceipt: &types.EOSTransactionReceipt{
 						Status:               statusCode,
 						CPUUsageMicroSeconds: uint64(txReceipt.CPUUsageMicroSeconds),
-						// CPUUsageMicroSeconds: uint64(tx.CPUUsageMicroSeconds),
-						NetUsageWords: uint64(txReceipt.NetUsageWords),
+						NetUsageWords:        uint64(txReceipt.NetUsageWords),
 						TRX: types.EOSTransactionWithID{
-							ID:          hex.EncodeToString([]byte(tx.ID())),
-							Signatures:  trxSigs,
-							Compression: trxCmp,
-							// PackedTRX:             hex.EncodeToString(packed.Transaction),
-							// PackedContextFreeData: hex.EncodeToString(packed.PackedContextFreeData),
-							ContextFreeData: cfd,
+							ID:                    hex.EncodeToString([]byte(tx.ID())),
+							Signatures:            trxSigs,
+							Compression:           trxCmp,
+							PackedTRX:             hex.EncodeToString(packedTx.PackedTransaction),
+							PackedContextFreeData: hex.EncodeToString(packedTx.PackedContextFreeData),
+							ContextFreeData:       cfd,
 							Transaction: types.EOSUnpackedTransaction{
 								Expiration:              tx.Expiration.Unix(), // unpacked.Expiration.Unix(),
 								RefBlockNum:             uint64(tx.RefBlockNum),
@@ -263,7 +265,7 @@ func (app *EosApp) Watch(
 							singletonTransactions = append(singletonTransactions, transactions[txNum])
 						}
 					} else {
-						log.Println("No Action.Data")
+						log.Println("Custom Data")
 					}
 				}
 
