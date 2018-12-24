@@ -132,7 +132,7 @@ func StartListening(c *cli.Context) {
 				} else {
 					// fmt.Printf("Running submitted block to worker pool %s\n", dat)
 					jsonString := string(dat[:])
-					// fmt.Printf("%s\n", jsonString)
+					fmt.Printf("%s\n", jsonString)
 
 					for _, s := range activeStorages {
 						s.Push(jsonString)

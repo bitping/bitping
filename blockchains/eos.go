@@ -121,12 +121,12 @@ func (app *EosApp) Watch(
 			for txNum, txReceipt := range block.Transactions {
 				log.Printf("tx receipt: %v", txReceipt)
 
-				// if txReceipt.Transaction == nil {
-				// 	log.Printf("Transaction Receipt has no Transaction")
-				// 	continue
-				// }
-
 				packedTx := txReceipt.Transaction.Packed
+
+				if packedTx == nil || packedTx.PackedTransaction == nil {
+					log.Printf("PackedTransaction has no Transaction")
+					continue
+				}
 
 				tx, err := packedTx.Unpack()
 				if err != nil {
@@ -187,16 +187,23 @@ func (app *EosApp) Watch(
 					}
 				}
 
+				id, err := packedTx.ID()
+				if err != nil {
+					log.Fatalf("PackedTransaction.ID Decode Error: %v", err)
+					errCh <- err
+					continue
+				}
+
 				transactions[txNum] = types.Transaction{
 					BlockHash:   hex.EncodeToString(block.ID),
 					BlockNumber: int64(block.BlockNum),
-					Hash:        hex.EncodeToString([]byte(tx.ID())),
+					Hash:        hex.EncodeToString([]byte(id)),
 					EOSTransactionReceipt: &types.EOSTransactionReceipt{
 						Status:               statusCode,
 						CPUUsageMicroSeconds: uint64(txReceipt.CPUUsageMicroSeconds),
 						NetUsageWords:        uint64(txReceipt.NetUsageWords),
 						TRX: types.EOSTransactionWithID{
-							ID:                    hex.EncodeToString([]byte(tx.ID())),
+							ID:                    hex.EncodeToString([]byte(id)),
 							Signatures:            trxSigs,
 							Compression:           trxCmp,
 							PackedTRX:             hex.EncodeToString(packedTx.PackedTransaction),
