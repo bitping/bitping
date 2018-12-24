@@ -69,15 +69,15 @@ func (app EosApp) IsConfigured(c *cli.Context) bool {
 
 func (app *EosApp) Configure(c *cli.Context) error {
 	nodePath := c.String("eos")
-	api := eos.New(nodePath)
+	client := eos.New(nodePath)
 
-	info, err := api.GetInfo()
+	info, err := client.GetInfo()
 	if err != nil {
 		log.Fatalf("GetInfo Error, %v", err)
 		return err
 	}
 
-	app.Client = api
+	app.Client = client
 	app.Info = info
 	app.Options = EosOptions{
 		Node:           nodePath,
@@ -111,23 +111,48 @@ func (app *EosApp) Watch(
 				continue
 			}
 
+			log.Printf("block: %v", block)
+
+			accountName := info.HeadBlockProducer
+
+			// eosTx, err := app.Client.GetTransactions(accountName)
+			// if err != nil {
+			// 	log.Fatalf("Getting transaction error for account %v: %v", accountName, err)
+			// 	errCh <- err
+			// 	continue
+			// }
+
+			// params := eos.GetActionsRequest{
+			// 	AccountName: accountName,
+			// }
+
+			// eosActions, err := app.Client.GetActions(params)
+			// if err != nil {
+			// 	log.Fatalf("Getting actions error: %v", err)
+			// 	errCh <- err
+			// 	continue
+			// }
+
 			transactions := make([]types.Transaction, len(block.Transactions))
 			singletonTransactions := make([]types.Transaction, 0)
-			for txNum, tx := range block.Transactions {
-				if tx.Transaction.Packed == nil {
-					continue
-				}
+			for txNum, txReceipt := range block.Transactions {
+				// packed := tx.Receipt.PackedTransaction
 
-				packed := tx.Transaction.Packed
-				unpacked, err := packed.Unpack()
+				// if tx.Transaction == nil {
+				// 	continue
+				// }
+
+				packedTx := txReceipt.Transaction.Packed
+
+				tx, err := packedTx.Unpack()
 				if err != nil {
 					log.Fatalf("Transaction.Packed.Unpack Error: %v", err)
 					errCh <- err
 					continue
 				}
 
-				statusCode := ""
-				switch tx.Status {
+				statusCode := "unknown"
+				switch txReceipt.Status {
 				case 0:
 					statusCode = "executed"
 				case 1:
@@ -140,54 +165,27 @@ func (app *EosApp) Watch(
 					statusCode = "unknown"
 				}
 
-				trxSigs := make([]string, len(unpacked.Signatures))
-				for i, sig := range unpacked.Signatures {
+				// TOOD: Fix this?
+				trxSigs := make([]string, len(tx.Signatures))
+				for i, sig := range tx.Signatures {
 					trxSigs[i] = sig.String()
 				}
 
 				trxCmp := ""
-				switch packed.Compression {
+				switch packedTx.Compression {
 				case 0:
 					trxCmp = "none"
 				case 1:
 					trxCmp = "zlib"
 				}
 
-				cfd := make([]string, len(unpacked.ContextFreeData))
-				for i, cf := range unpacked.ContextFreeData {
+				cfd := make([]string, len(tx.ContextFreeData))
+				for i, cf := range tx.ContextFreeData {
 					cfd[i] = hex.EncodeToString(cf)
 				}
 
-				transactions[txNum] = types.Transaction{
-					BlockHash:   hex.EncodeToString(block.ID),
-					BlockNumber: int64(block.BlockNum),
-					Hash:        hex.EncodeToString(tx.Transaction.ID),
-					EOSTransactionReceipt: &types.EOSTransactionReceipt{
-						Status:               statusCode,
-						CPUUsageMicroSeconds: uint64(tx.CPUUsageMicroSeconds),
-						NetUsageWords:        uint64(tx.NetUsageWords),
-						TRX: types.EOSTransactionWithID{
-							ID:                    hex.EncodeToString(tx.Transaction.ID),
-							Signatures:            trxSigs,
-							Compression:           trxCmp,
-							PackedTRX:             hex.EncodeToString(packed.PackedTransaction),
-							PackedContextFreeData: hex.EncodeToString(packed.PackedContextFreeData),
-							ContextFreeData:       cfd,
-							Transaction: types.EOSUnpackedTransaction{
-								Expiration:              unpacked.Expiration.Unix(),
-								RefBlockNum:             uint64(unpacked.RefBlockNum),
-								RefBlockPrefix:          uint64(unpacked.RefBlockPrefix),
-								MaxNetUsageWords:        uint64(unpacked.MaxNetUsageWords),
-								MaxCPUUsageMicroSeconds: uint64(unpacked.MaxCPUUsageMS),
-								DelaySec:                uint64(unpacked.DelaySec),
-								// ContextFreeActions:      cfas,
-							},
-						},
-					},
-				}
-
-				cfActs := make([]types.EOSAction, len(unpacked.Actions))
-				for i, cfAct := range unpacked.ContextFreeActions {
+				cfActs := make([]types.EOSAction, len(tx.Actions))
+				for i, cfAct := range tx.ContextFreeActions {
 					cfActs[i] = types.EOSAction{
 						Account: string(cfAct.Account),
 						Name:    string(cfAct.Name),
@@ -195,19 +193,47 @@ func (app *EosApp) Watch(
 						Data:    cfAct.Data,
 					}
 				}
-				transactions[txNum].TRX.Transaction.ContextFreeActions = cfActs
 
-				exts := make([]types.EOSExtension, len(unpacked.Extensions))
-				for i, ext := range unpacked.Extensions {
+				exts := make([]types.EOSExtension, len(tx.Extensions))
+				for i, ext := range tx.Extensions {
 					exts[i] = types.EOSExtension{
 						Type: uint64(ext.Type),
 						Data: hex.EncodeToString(ext.Data),
 					}
 				}
-				transactions[txNum].TRX.Transaction.ContextFreeActions = cfActs
 
-				acts := make([]types.EOSAction, len(unpacked.Actions))
-				for i, act := range unpacked.Actions {
+				transactions[txNum] = types.Transaction{
+					BlockHash:   hex.EncodeToString(block.ID),
+					BlockNumber: int64(block.BlockNum),
+					Hash:        hex.EncodeToString([]byte(tx.ID())),
+					EOSTransactionReceipt: &types.EOSTransactionReceipt{
+						Status:               statusCode,
+						CPUUsageMicroSeconds: uint64(txReceipt.CPUUsageMicroSeconds),
+						// CPUUsageMicroSeconds: uint64(tx.CPUUsageMicroSeconds),
+						NetUsageWords: uint64(txReceipt.NetUsageWords),
+						TRX: types.EOSTransactionWithID{
+							ID:          hex.EncodeToString([]byte(tx.ID())),
+							Signatures:  trxSigs,
+							Compression: trxCmp,
+							// PackedTRX:             hex.EncodeToString(packed.Transaction),
+							// PackedContextFreeData: hex.EncodeToString(packed.PackedContextFreeData),
+							ContextFreeData: cfd,
+							Transaction: types.EOSUnpackedTransaction{
+								Expiration:              tx.Expiration.Unix(), // unpacked.Expiration.Unix(),
+								RefBlockNum:             uint64(tx.RefBlockNum),
+								MaxNetUsageWords:        uint64(tx.MaxCPUUsageMS),
+								MaxCPUUsageMicroSeconds: uint64(tx.MaxNetUsageWords),
+								DelaySec:                uint64(tx.DelaySec),
+								RefBlockPrefix:          uint64(tx.RefBlockPrefix),
+								ContextFreeActions:      cfActs,
+								TransactionExtensions:   exts,
+							},
+						},
+					},
+				}
+
+				acts := make([]types.EOSAction, len(tx.Actions))
+				for i, act := range tx.Actions {
 					acts[i] = types.EOSAction{
 						Account: string(act.Account),
 						Name:    string(act.Name),
