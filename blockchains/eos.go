@@ -10,9 +10,11 @@ import (
 	"github.com/eoscanada/eos-go/token"
 )
 
+// EosOptions struct
 type EosOptions struct {
 	Node           string
 	NetworkVersion int64
+	ChainID        string
 }
 
 // TODO: make interface for blockchains
@@ -22,6 +24,7 @@ type EosApp struct {
 	Options EosOptions
 }
 
+// NewEosClient creates a new EosClient
 func NewEosClient(opts EosOptions) (*EosApp, error) {
 	log.Printf("EOS Opts %v\n", opts)
 	api := eos.New(opts.Node)
@@ -145,7 +148,6 @@ func (app *EosApp) Watch(
 					statusCode = "unknown"
 				}
 
-				// TOOD: Fix this?
 				trxSigs := make([]string, len(tx.Signatures))
 				for i, sig := range tx.Signatures {
 					trxSigs[i] = sig.String()
@@ -223,6 +225,7 @@ func (app *EosApp) Watch(
 
 					if act.Data != nil {
 						err := act.MapToRegisteredAction()
+						// err := act.MapToRegisteredAction()
 						if err != nil {
 							log.Fatalf("MapToRegisteredAction %v", err)
 							errCh <- err
