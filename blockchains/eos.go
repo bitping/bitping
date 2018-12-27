@@ -117,7 +117,7 @@ func (app *EosApp) Watch(
 			log.Printf("block: %v", block)
 
 			transactions := make([]types.Transaction, len(block.Transactions))
-			singletonTransactions := make([]types.Transaction, 0)
+			derivedTransactions := make([]types.Transaction, 0)
 			for txNum, txReceipt := range block.Transactions {
 				log.Printf("tx receipt: %v", txReceipt)
 
@@ -263,8 +263,8 @@ func (app *EosApp) Watch(
 							transactions[txNum].Value = types.BigIntFromInt(op.Quantity.Amount)
 							transactions[txNum].Symbol = string(op.Quantity.Symbol.Symbol)
 							transactions[txNum].Precision = uint64(op.Quantity.Precision)
-							transactions[txNum].SingletonIndex = len(singletonTransactions)
-							singletonTransactions = append(singletonTransactions, transactions[txNum])
+							transactions[txNum].DerivedIndex = len(derivedTransactions)
+							derivedTransactions = append(derivedTransactions, transactions[txNum])
 						case *token.Create:
 							// Send token to self meaning
 							log.Printf("Created By: %s, Quantity: %s", op.Issuer, op.MaximumSupply)
@@ -273,8 +273,8 @@ func (app *EosApp) Watch(
 							transactions[txNum].Value = types.BigIntFromInt(op.MaximumSupply.Amount)
 							transactions[txNum].Symbol = string(op.MaximumSupply.Symbol.Symbol)
 							transactions[txNum].Precision = uint64(op.MaximumSupply.Precision)
-							transactions[txNum].SingletonIndex = len(singletonTransactions)
-							singletonTransactions = append(singletonTransactions, transactions[txNum])
+							transactions[txNum].DerivedIndex = len(derivedTransactions)
+							derivedTransactions = append(derivedTransactions, transactions[txNum])
 						case *token.Issue:
 							log.Printf("Created By: %s, Quantity: %s", op.To, op.Quantity)
 							transactions[txNum].From = string(act.Account)
@@ -282,8 +282,8 @@ func (app *EosApp) Watch(
 							transactions[txNum].Value = types.BigIntFromInt(op.Quantity.Amount)
 							transactions[txNum].Symbol = string(op.Quantity.Symbol.Symbol)
 							transactions[txNum].Precision = uint64(op.Quantity.Precision)
-							transactions[txNum].SingletonIndex = len(singletonTransactions)
-							singletonTransactions = append(singletonTransactions, transactions[txNum])
+							transactions[txNum].DerivedIndex = len(derivedTransactions)
+							derivedTransactions = append(derivedTransactions, transactions[txNum])
 						}
 					} else {
 						log.Println("Custom Data")
@@ -325,8 +325,8 @@ func (app *EosApp) Watch(
 					ChainID:               hex.EncodeToString(info.ChainID),
 				},
 
-				Transactions:          transactions,
-				SingletonTransactions: singletonTransactions,
+				Transactions:        transactions,
+				DerivedTransactions: derivedTransactions,
 			}
 
 			blockCh <- blockObj

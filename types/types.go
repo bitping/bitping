@@ -174,7 +174,7 @@ type Block struct {
 	Transactions []Transaction `json:"transactions"`
 
 	// Batched Transactions are broken up
-	SingletonTransactions []Transaction `json:"singletonTransactions"`
+	DerivedTransactions []Transaction `json:"derivedTransactions"`
 }
 
 // {
@@ -324,8 +324,8 @@ type Transaction struct {
 	Out         uint64  `json:"out"`
 
 	// Is this a tx that's split form
-	IsSingleton    bool `json:"isSplit"`
-	SingletonIndex int  `json:"singletonIndex"`
+	IsDerived    bool `json:"isSplit"`
+	DerivedIndex int  `json:"derivedIndex"`
 
 	Actions []Action `json:"actions"`
 }
