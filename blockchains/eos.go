@@ -14,7 +14,6 @@ import (
 type EosOptions struct {
 	Node           string
 	NetworkVersion int64
-	ChainID        string
 }
 
 // TODO: make interface for blockchains

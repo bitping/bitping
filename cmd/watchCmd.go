@@ -9,7 +9,7 @@ import (
 
 	contracts "github.com/auser/bitping/contracts"
 
-	"github.com/ethereum/go-ethereum/common"
+	// "github.com/ethereum/go-ethereum/common"
 
 	"github.com/auser/bitping/blockchains"
 	"github.com/auser/bitping/types"
@@ -26,6 +26,8 @@ var storages []Storer
 var WatchCmd cli.Command
 var contract *contracts.USDToken
 
+// Initialize the Watcher list, add cli flags for them and initialize the Watch
+// Command
 func init() {
 	watchers = []Watcher{
 		&blockchains.EthereumApp{},
@@ -58,25 +60,28 @@ func init() {
 	}
 }
 
-// StartListening starts the watching of blockchains
+// StartListening starts the watching of blockchains based on CLI Input
 func StartListening(c *cli.Context) {
 	// au := aurora.NewAurora(!c.GlobalBool("nocolor"))
+
 	// Open the contract
-	contractAddrStr := c.String("contractAddress")
-	ethClient := watchers[0].(*blockchains.EthereumApp).Client
+	// contractAddrStr := c.String("contractAddress")
+	// ethClient := watchers[0].(*blockchains.EthereumApp).Client
 
-	if contractAddrStr != "" {
-		contractAddr := common.HexToAddress(contractAddrStr)
-		contract, err := contracts.NewUSDToken(contractAddr, ethClient)
+	// // Hard coded contract for demo expedience
+	// if contractAddrStr != "" {
+	// 	contractAddr := common.HexToAddress(contractAddrStr)
+	// 	contract, err := contracts.NewUSDToken(contractAddr, ethClient)
 
-		if err != nil {
-			panic(err)
-		}
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
 
-		fmt.Println("contract is loaded")
-		_ = contract
-	}
+	// 	fmt.Println("contract is loaded")
+	// 	_ = contract
+	// }
 
+	// Initialize a pool of workers
 	var workerPool = work.New(128)
 	defer workerPool.Stop()
 	var blockCh = make(chan types.Block)
@@ -84,7 +89,7 @@ func StartListening(c *cli.Context) {
 
 	var activeStorages = []Storer{}
 
-	// CONFIGURE STORAGE
+	// Configure storage backends
 	for _, s := range storages {
 		if s.IsConfigured(c) {
 			log.Printf("Configuring storage %v", s.Name())
@@ -100,7 +105,7 @@ func StartListening(c *cli.Context) {
 		activeStorages = append(activeStorages, s)
 	}
 
-	// CONFIGURE WATCHABLES
+	// Configure blockchain watchers
 	for _, w := range watchers {
 		if w.IsConfigured(c) {
 			log.Printf("Configuring %v", w.Name())
@@ -116,15 +121,17 @@ func StartListening(c *cli.Context) {
 
 		log.Printf("Starting %v", w.Name())
 
+		// Start the watch loop
 		go w.Watch(blockCh, errCh)
 	}
 
-	// SETUP LISTENING PROCESS
+	// Start processing the blocks coming in the worker pool
 	for {
 		select {
 		case block := <-blockCh:
-			// Handle querying here
+			// Process blocks in the worker pool
 			workerPool.Submit(func() {
+				// Convert block to json in preparation to send via webhook
 				dat, err := json.Marshal(block)
 				if err != nil {
 					log.Printf("Error marshaling block: %s\n", err.Error())
