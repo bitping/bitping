@@ -240,7 +240,7 @@ type EOSAction struct {
 	Name          string               `json:"name"`
 	Authorization []EOSPermissionLevel `json:"authorization"`
 	HexData       string               `json:"hexData"`
-	Data          interface{}          `json:"data"`
+	Data          string               `json:"data"`
 }
 
 type EOSUnpackedTransaction struct {
@@ -286,13 +286,26 @@ type EOSTransactionReceipt struct {
 //   "input": "0x57cb2fc4"
 // }
 
+type EthereumCall struct {
+	Input []byte `json:"input"`
+}
+
+type EthereumEvent struct {
+	LogIndex         uint64   `json:"logIndex"`
+	TransactionIndex uint64   `json:"transactionIndex"`
+	Address          string   `json:"address"`
+	Data             []byte   `json:"data"`
+	Topics           []string `json:"topics"`
+	Removed          bool     `json:"bool"`
+}
+
 type EthereumTransaction struct {
 	TransactionIndex int64   `json:"transactionIndex"`
 	GasPrice         *BigInt `json:"gasPrice"`
 	Gas              uint64  `json:"gas"`
 }
 
-// UTX is address
+// UTXO is address
 type Transaction struct {
 	*EOSTransactionReceipt
 	*EthereumTransaction
@@ -307,10 +320,26 @@ type Transaction struct {
 	Symbol      string  `json:"symbol"`
 	Precision   uint64  `json:"precision"`
 	Data        []byte  `json:"data"`
+	In          uint64  `json:"in"`
+	Out         uint64  `json:"out"`
 
 	// Is this a tx that's split form
 	IsSingleton    bool `json:"isSplit"`
 	SingletonIndex int  `json:"singletonIndex"`
+
+	Actions []Action `json:"actions"`
+}
+
+// Actions/Events/Function Calls
+type Action struct {
+	*EOSAction
+	*EthereumCall
+	*EthereumEvent
+
+	BlockHash       string `json:"blockHash"`
+	BlockNumber     int64  `json:"blockNumber"`
+	TransactionHash string `json:"transactionHash"`
+	Address         string `json:"address"`
 }
 
 type Log struct {

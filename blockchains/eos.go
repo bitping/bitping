@@ -2,6 +2,7 @@ package blockchains
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"log"
 
 	"github.com/auser/bitping/types"
@@ -170,11 +171,18 @@ func (app *EosApp) Watch(
 
 				cfActs := make([]types.EOSAction, len(tx.ContextFreeActions))
 				for i, cfAct := range tx.ContextFreeActions {
+					dat, err := json.Marshal(cfAct.Data)
+					if err != nil {
+						log.Fatalf("Could not json.Marshal cfAct.Data: %v", err)
+						errCh <- err
+						continue
+					}
+
 					cfActs[i] = types.EOSAction{
 						Account: string(cfAct.Account),
 						Name:    string(cfAct.Name),
 						HexData: hex.EncodeToString(cfAct.HexData),
-						Data:    cfAct.Data,
+						Data:    string(dat),
 					}
 				}
 
@@ -224,11 +232,18 @@ func (app *EosApp) Watch(
 
 				acts := make([]types.EOSAction, len(tx.Actions))
 				for i, act := range tx.Actions {
+					dat, err := json.Marshal(act.Data)
+					if err != nil {
+						log.Fatalf("Could not json.Marshal act.Data: %v", err)
+						errCh <- err
+						continue
+					}
+
 					acts[i] = types.EOSAction{
 						Account: string(act.Account),
 						Name:    string(act.Name),
 						HexData: hex.EncodeToString(act.HexData),
-						Data:    act.Data,
+						Data:    string(dat),
 					}
 
 					if act.Data != nil {
@@ -276,6 +291,20 @@ func (app *EosApp) Watch(
 				}
 
 				transactions[txNum].TRX.Transaction.Actions = acts
+
+				// Create Action Unified Block Type
+				actions := make([]types.Action, len(acts))
+				for i, act := range acts {
+					actions[i] = types.Action{
+						BlockHash:       hex.EncodeToString(block.ID),
+						BlockNumber:     int64(block.BlockNum),
+						TransactionHash: transactions[txNum].Hash,
+						Address:         act.Account,
+						EOSAction:       &act,
+					}
+				}
+
+				transactions[txNum].Actions = actions
 			}
 
 			blockObj := types.Block{
