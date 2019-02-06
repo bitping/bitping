@@ -31,7 +31,6 @@ type EthereumApp struct {
 	Client    *ethclient.Client
 	Options   EthereumOptions
 	NetworkId big.Int
-	types.BlockChainRunner
 }
 
 func NewEthClient(opts EthereumOptions) (*EthereumApp, error) {
@@ -96,7 +95,7 @@ func (app *EthereumApp) Watch(
 	fmt.Printf("Running Ethereum\n")
 
 	// test
-	var headsCh = make(chan *types.Header)
+	var headsCh = make(chan *types.GethHeader)
 	var errCh = make(chan error)
 	go app.SubscribeToNews(headsCh, errCh)
 
@@ -134,10 +133,10 @@ func (app *EthereumApp) GetNetwork() *big.Int {
 }
 
 func (app *EthereumApp) SubscribeToNews(
-	heads chan *types.Header,
+	heads chan *types.GethHeader,
 	errCh chan error,
 ) {
-	var ch = make(chan *types.Header)
+	var ch = make(chan *types.GethHeader)
 	ctx := context.Background()
 	sub, err := app.Client.SubscribeNewHead(ctx, ch)
 	if err != nil {
@@ -156,10 +155,10 @@ func (app *EthereumApp) SubscribeToNews(
 	}
 }
 
-func (app *EthereumApp) getByNumWithBackoff(num *big.Int) (*types.BlockchainBlock, error) {
+func (app *EthereumApp) getByNumWithBackoff(num *big.Int) (*types.GethBlock, error) {
 	ctx := context.Background()
 	var (
-		block *types.BlockchainBlock
+		block *types.GethBlock
 		err   error
 	)
 	var b = &backoff.Backoff{
@@ -173,7 +172,7 @@ func (app *EthereumApp) getByNumWithBackoff(num *big.Int) (*types.BlockchainBloc
 		if err != nil {
 			d := b.Duration()
 			if d > b.Max {
-				return &types.BlockchainBlock{}, err
+				return &types.GethBlock{}, err
 			}
 			time.Sleep(d)
 			continue
@@ -215,7 +214,7 @@ func (app *EthereumApp) getTransactionCountWithBackoff(hsh common.Hash) (uint, e
 }
 
 func (app *EthereumApp) GetFromHeader(
-	head *types.Header,
+	head *types.GethHeader,
 ) (types.Block, error) {
 	// ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 
@@ -236,7 +235,7 @@ func (app *EthereumApp) GetFromHeader(
 	for i, tx := range block.Transactions() {
 		var txFromStr string = "unknown"
 		var txToStr string = "unknown"
-		if msg, err := tx.AsMessage(types.HomesteadSigner{}); err != nil {
+		if msg, err := tx.AsMessage(types.GethHomesteadSigner{}); err != nil {
 
 			txFromStr = msg.From().Hex()
 			if msg.To() != nil {
