@@ -7,7 +7,7 @@ type Storer interface {
 	Name() string
 	AddCLIFlags([]cli.Flag) []cli.Flag
 	Configure(c *cli.Context) error
-	IsConfigured(c *cli.Context) bool
+	CanConfigure(c *cli.Context) bool
 
 	Push(interface{}) bool
 }

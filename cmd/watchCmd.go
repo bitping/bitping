@@ -91,7 +91,7 @@ func StartListening(c *cli.Context) {
 
 	// Configure storage backends
 	for _, s := range storages {
-		if s.IsConfigured(c) {
+		if s.CanConfigure(c) {
 			log.Printf("Configuring storage %v", s.Name())
 		} else {
 			log.Printf("Not configuring storage %v", s.Name())
@@ -107,7 +107,7 @@ func StartListening(c *cli.Context) {
 
 	// Configure blockchain watchers
 	for _, w := range watchers {
-		if w.IsConfigured(c) {
+		if w.CanConfigure(c) {
 			log.Printf("Configuring %v", w.Name())
 		} else {
 			log.Printf("Not Starting %v", w.Name())

@@ -66,7 +66,7 @@ func (app EosApp) Name() string {
 	return "EOS Watcher"
 }
 
-func (app EosApp) IsConfigured(c *cli.Context) bool {
+func (app EosApp) CanConfigure(c *cli.Context) bool {
 	return c.String("eos") != ""
 }
 

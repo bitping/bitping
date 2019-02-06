@@ -22,7 +22,7 @@ func (s *GoogleStore) Name() string {
 
 // IsConfigured tells us from the CLI flags passed if we're using this
 // or not
-func (s *GoogleStore) IsConfigured(c *cli.Context) bool {
+func (s *GoogleStore) CanConfigure(c *cli.Context) bool {
 	return c.String("googleProjectID") != ""
 }
 

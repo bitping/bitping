@@ -12,7 +12,7 @@ type Configurable interface {
 
 	// Checks to see if the cli.Context has enough cli.Flags for configuring
 	// this object
-	IsConfigured(c *cli.Context) bool
+	CanConfigure(c *cli.Context) bool
 
 	// Configure this object using the cli.Context
 	Configure(c *cli.Context) error

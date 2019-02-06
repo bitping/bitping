@@ -64,7 +64,7 @@ func (app EthereumApp) AddCLIFlags(fs []cli.Flag) []cli.Flag {
 	})
 }
 
-func (app EthereumApp) IsConfigured(c *cli.Context) bool {
+func (app EthereumApp) CanConfigure(c *cli.Context) bool {
 	return c.String("eth") != ""
 }
 
