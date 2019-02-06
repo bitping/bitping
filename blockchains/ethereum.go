@@ -249,15 +249,23 @@ func (app *EthereumApp) GetFromHeader(
 			BlockNumber: block.Number().Int64(),
 			Hash:        tx.Hash().String(),
 			Nonce:       int64(tx.Nonce()),
-			From:        strings.ToLower(txFromStr),
-			To:          strings.ToLower(txToStr),
-			Value:       types.NewBigInt(tx.Value()),
-			Data:        tx.Data(),
 
 			EthereumTransaction: &types.EthereumTransaction{
 				GasPrice:         types.NewBigInt(tx.Cost()),
 				Gas:              tx.Gas(),
 				TransactionIndex: int64(i),
+			},
+
+			Actions: []types.Action{
+				types.Action{
+					EthereumCall: &types.EthereumCall{
+						Input: tx.Data(),
+					},
+					From:  strings.ToLower(txFromStr),
+					To:    strings.ToLower(txToStr),
+					Value: types.NewBigInt(tx.Value()),
+					Data:  tx.Data(),
+				},
 			},
 		}
 		transactions = append(transactions, transaction)
@@ -286,8 +294,7 @@ func (app *EthereumApp) GetFromHeader(
 			StateRoot:        head.Root.String(),
 		},
 
-		Transactions:          transactions,
-		SingletonTransactions: transactions,
+		Transactions: transactions,
 	}
 
 	return blockObj, nil

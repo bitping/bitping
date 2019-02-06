@@ -117,7 +117,6 @@ func (app *EosApp) Watch(
 			log.Printf("block: %v", block)
 
 			transactions := make([]types.Transaction, len(block.Transactions))
-			derivedTransactions := make([]types.Transaction, 0)
 			for txNum, txReceipt := range block.Transactions {
 				log.Printf("tx receipt: %v", txReceipt)
 
@@ -230,7 +229,8 @@ func (app *EosApp) Watch(
 					},
 				}
 
-				acts := make([]types.EOSAction, len(tx.Actions))
+				acts := make([]types.Action, len(tx.Actions))
+				eosActs := make([]types.EOSAction, len(tx.Actions))
 				for i, act := range tx.Actions {
 					dat, err := json.Marshal(act.Data)
 					if err != nil {
@@ -239,11 +239,21 @@ func (app *EosApp) Watch(
 						continue
 					}
 
-					acts[i] = types.EOSAction{
+					eosActs[i] = types.EOSAction{
 						Account: string(act.Account),
 						Name:    string(act.Name),
 						HexData: hex.EncodeToString(act.HexData),
 						Data:    string(dat),
+					}
+
+					acts[i] = types.Action{
+						BlockHash:       hex.EncodeToString(block.ID),
+						BlockNumber:     int64(block.BlockNum),
+						TransactionHash: transactions[txNum].Hash,
+						Address:         eosActs[i].Account,
+						Data:            []byte(string(dat)),
+
+						EOSAction: &eosActs[i],
 					}
 
 					if act.Data != nil {
@@ -258,53 +268,34 @@ func (app *EosApp) Watch(
 						switch op := act.Data.(type) {
 						case *token.Transfer:
 							log.Printf("Transfer From: %s , To: %s, Quantity: %s", op.From, op.To, op.Quantity) // 191
-							transactions[txNum].From = string(op.From)
-							transactions[txNum].To = string(op.To)
-							transactions[txNum].Value = types.BigIntFromInt(op.Quantity.Amount)
-							transactions[txNum].Symbol = string(op.Quantity.Symbol.Symbol)
-							transactions[txNum].Precision = uint64(op.Quantity.Precision)
-							transactions[txNum].DerivedIndex = len(derivedTransactions)
-							derivedTransactions = append(derivedTransactions, transactions[txNum])
+							acts[i].From = string(op.From)
+							acts[i].To = string(op.To)
+							acts[i].Value = types.BigIntFromInt(op.Quantity.Amount)
+							acts[i].Symbol = string(op.Quantity.Symbol.Symbol)
+							acts[i].Precision = uint64(op.Quantity.Precision)
 						case *token.Create:
 							// Send token to self meaning
 							log.Printf("Created By: %s, Quantity: %s", op.Issuer, op.MaximumSupply)
-							transactions[txNum].From = string(op.Issuer)
-							transactions[txNum].To = string(act.Account)
-							transactions[txNum].Value = types.BigIntFromInt(op.MaximumSupply.Amount)
-							transactions[txNum].Symbol = string(op.MaximumSupply.Symbol.Symbol)
-							transactions[txNum].Precision = uint64(op.MaximumSupply.Precision)
-							transactions[txNum].DerivedIndex = len(derivedTransactions)
-							derivedTransactions = append(derivedTransactions, transactions[txNum])
+							acts[i].From = string(op.Issuer)
+							acts[i].To = string(act.Account)
+							acts[i].Value = types.BigIntFromInt(op.MaximumSupply.Amount)
+							acts[i].Symbol = string(op.MaximumSupply.Symbol.Symbol)
+							acts[i].Precision = uint64(op.MaximumSupply.Precision)
 						case *token.Issue:
 							log.Printf("Created By: %s, Quantity: %s", op.To, op.Quantity)
-							transactions[txNum].From = string(act.Account)
-							transactions[txNum].To = string(op.To)
-							transactions[txNum].Value = types.BigIntFromInt(op.Quantity.Amount)
-							transactions[txNum].Symbol = string(op.Quantity.Symbol.Symbol)
-							transactions[txNum].Precision = uint64(op.Quantity.Precision)
-							transactions[txNum].DerivedIndex = len(derivedTransactions)
-							derivedTransactions = append(derivedTransactions, transactions[txNum])
+							acts[i].From = string(act.Account)
+							acts[i].To = string(op.To)
+							acts[i].Value = types.BigIntFromInt(op.Quantity.Amount)
+							acts[i].Symbol = string(op.Quantity.Symbol.Symbol)
+							acts[i].Precision = uint64(op.Quantity.Precision)
 						}
 					} else {
 						log.Println("Custom Data")
 					}
 				}
 
-				transactions[txNum].TRX.Transaction.Actions = acts
-
-				// Create Action Unified Block Type
-				actions := make([]types.Action, len(acts))
-				for i, act := range acts {
-					actions[i] = types.Action{
-						BlockHash:       hex.EncodeToString(block.ID),
-						BlockNumber:     int64(block.BlockNum),
-						TransactionHash: transactions[txNum].Hash,
-						Address:         act.Account,
-						EOSAction:       &act,
-					}
-				}
-
-				transactions[txNum].Actions = actions
+				transactions[txNum].TRX.Transaction.Actions = eosActs
+				transactions[txNum].Actions = acts
 			}
 
 			blockObj := types.Block{
@@ -325,8 +316,7 @@ func (app *EosApp) Watch(
 					ChainID:               hex.EncodeToString(info.ChainID),
 				},
 
-				Transactions:        transactions,
-				DerivedTransactions: derivedTransactions,
+				Transactions: transactions,
 			}
 
 			blockCh <- blockObj
