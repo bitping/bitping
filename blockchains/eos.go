@@ -11,13 +11,15 @@ import (
 	"github.com/eoscanada/eos-go/token"
 )
 
-// EosOptions struct
+// EosOptions store the EosApp options
 type EosOptions struct {
 	Node           string
 	NetworkVersion int64
 }
 
-// TODO: make interface for blockchains
+// EosApp holds the EOS Client and configuration of an EOS App
+// It allows the user to watch for new blockchain blocks generates a Go
+// representation of both the original block as well as a unified block
 type EosApp struct {
 	Client  *eos.API
 	Info    *eos.InfoResp
@@ -43,6 +45,12 @@ func NewEosClient(opts EosOptions) (*EosApp, error) {
 	return app, nil
 }
 
+// Name returns the app name
+func (app EosApp) Name() string {
+	return "EOS Watcher"
+}
+
+// AddCLIFlags configures the CLI Settings
 func (app EosApp) AddCLIFlags(fs []cli.Flag) []cli.Flag {
 	return append(fs,
 		cli.StringFlag{
@@ -62,14 +70,12 @@ func (app EosApp) AddCLIFlags(fs []cli.Flag) []cli.Flag {
 	)
 }
 
-func (app EosApp) Name() string {
-	return "EOS Watcher"
-}
-
+// CanConfigure determines if enough CLI Flags are set to configure the app
 func (app EosApp) CanConfigure(c *cli.Context) bool {
 	return c.String("eos") != ""
 }
 
+// Configure reads CLI Flag settints and configures app
 func (app *EosApp) Configure(c *cli.Context) error {
 	nodePath := c.String("eos")
 	client := eos.New(nodePath)
@@ -90,6 +96,7 @@ func (app *EosApp) Configure(c *cli.Context) error {
 	return nil
 }
 
+// Watch starts running the block watcher
 func (app *EosApp) Watch(
 	blockCh chan types.Block,
 	// transChan chan []types.Transaction,

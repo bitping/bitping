@@ -22,17 +22,21 @@ var b = &backoff.Backoff{
 	Max: 5 * time.Minute,
 }
 
+// EthereumOptions store the EthereumApp options
 type EthereumOptions struct {
 	Node string
 }
 
-// TODO: make interface for blockchains
+// EthereumApp holds the EOS Client and configuration of an EOS App
+// It allows the user to watch for new blockchain blocks generates a Go
+// representation of both the original block as well as a unified block
 type EthereumApp struct {
 	Client    *ethclient.Client
 	Options   EthereumOptions
 	NetworkId big.Int
 }
 
+// NewEthClient creates a new EthClient
 func NewEthClient(opts EthereumOptions) (*EthereumApp, error) {
 	nodePath := opts.Node
 	client, err := ethclient.Dial(nodePath)
@@ -52,10 +56,12 @@ func NewEthClient(opts EthereumOptions) (*EthereumApp, error) {
 	return app, nil
 }
 
+// Name returns the app name
 func (app EthereumApp) Name() string {
 	return "Ethereum Watcher"
 }
 
+// AddCLIFlags configures the CLI Settings
 func (app EthereumApp) AddCLIFlags(fs []cli.Flag) []cli.Flag {
 	return append(fs, cli.StringFlag{
 		Name:   "eth",
@@ -64,10 +70,12 @@ func (app EthereumApp) AddCLIFlags(fs []cli.Flag) []cli.Flag {
 	})
 }
 
+// CanConfigure determines if enough CLI Flags are set to configure the app
 func (app EthereumApp) CanConfigure(c *cli.Context) bool {
 	return c.String("eth") != ""
 }
 
+// Configure reads CLI Flag settints and configures app
 func (app *EthereumApp) Configure(c *cli.Context) error {
 	nodePath := c.String("eth")
 	client, err := ethclient.Dial(nodePath)
@@ -87,6 +95,7 @@ func (app *EthereumApp) Configure(c *cli.Context) error {
 	return nil
 }
 
+// Watch starts running the block watcher
 func (app *EthereumApp) Watch(
 	blockChan chan types.Block,
 	// transChan chan []types.Transaction,
@@ -123,6 +132,8 @@ func (app *EthereumApp) Watch(
 	}
 }
 
+// GetNetwork returns the Ethereum Network Id of th Ethereum node that the
+// EthereumApp is watching
 func (app *EthereumApp) GetNetwork() *big.Int {
 	ctx := context.Background()
 	networkId, err := app.Client.NetworkID(ctx)
@@ -132,6 +143,7 @@ func (app *EthereumApp) GetNetwork() *big.Int {
 	return networkId
 }
 
+// SubscribeToNews subscribes to node events
 func (app *EthereumApp) SubscribeToNews(
 	heads chan *types.GethHeader,
 	errCh chan error,
@@ -155,6 +167,7 @@ func (app *EthereumApp) SubscribeToNews(
 	}
 }
 
+// getByNumWithBackoff gets an Ethereum Block by its height/numeric Id
 func (app *EthereumApp) getByNumWithBackoff(num *big.Int) (*types.GethBlock, error) {
 	ctx := context.Background()
 	var (
@@ -183,6 +196,8 @@ func (app *EthereumApp) getByNumWithBackoff(num *big.Int) (*types.GethBlock, err
 	return block, nil
 }
 
+// getTransactionCountWithBackoff gets the amount of transactions on a given
+// block by its block hash
 func (app *EthereumApp) getTransactionCountWithBackoff(hsh common.Hash) (uint, error) {
 	var (
 		count uint
@@ -213,6 +228,7 @@ func (app *EthereumApp) getTransactionCountWithBackoff(hsh common.Hash) (uint, e
 	return count, nil
 }
 
+// GetFromHeader returns a unified block from the header
 func (app *EthereumApp) GetFromHeader(
 	head *types.GethHeader,
 ) (types.Block, error) {
